@@ -1,0 +1,14 @@
+{
+    "MONGO_URL": "mongodb+srv://vidhaninfotech:VidhanInfotech%401234@manager.psm2err.mongodb.net/ReNew360?retryWrites=true&w=majority",
+    "JWT_SECRET": "your_very_secret_key",
+    "URL": "http://192.168.1.21:3660/",
+    "productionURL": "http://renew360api.vidhaninfotech.com/",
+    "PORT": "3660",
+    "HOST": "mail.vidhaninfotech.com",
+    "SECURE": false,
+    "emailPORT": 25,
+    "AUTHUSER": "noreply@vidhaninfotech.com",
+    "AUTHPASSWORD": "iPKo3z!tpCSzrI5Sw",
+    "TWILIO_ACCOUNT_SID": "AC361462dda9f0e8d052dc09026ad3ec09",
+    "TWILIO_AUTH_TOKEN": "41e98bba946231b12fc72ce9508b5817"
+}
