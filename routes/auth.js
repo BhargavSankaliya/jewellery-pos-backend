@@ -10,9 +10,9 @@ const {
      ResendOtpController,
      VerifyOtpForUpdatePasswordController,
      updatePasswordAfterVerifyOTP,
+     FileUpload,
 } = require("../controllers/authController")
 const router = express.Router()
-const upload = require('../middlewares/upload');
 const verifyToken = require('../middlewares/verifyToken');
 const User = require('../models/User');
 const { validateSchema } = require('../models/baseModel');
@@ -47,6 +47,9 @@ router.post('/reset-password', updatePasswordAfterVerifyOTP);
 
 //RESET PASSWORD
 router.post('/change-password', verifyToken, resetPassword);
+
+//File upload
+router.post('/file-upload', FileUpload);
 
 
 

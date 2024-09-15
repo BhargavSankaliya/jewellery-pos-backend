@@ -18,7 +18,6 @@ const commonSchema = new mongoose.Schema({
     },
     deletedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
         required: false
     },
     isDeleted: {

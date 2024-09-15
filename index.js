@@ -4,6 +4,8 @@ const app = express();
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const authRoute = require("./routes/auth");
+const productCategoryRoute = require("./routes/productCategory");
+const fileUploadRoute = require("./routes/fileUploadRoute");
 const path = require("path");
 const { errorHandler } = require("./middlewares/error");
 const verifyToken = require("./middlewares/verifyToken");
@@ -11,7 +13,9 @@ const responseInterceptor = require("./middlewares/responseInterceptor");
 const config = require("./environmentVariable.json");
 const multer = require("multer");
 const fs = require("fs");
+const cors = require("cors");
 
+app.use(cors());
 dotenv.config();
 app.use(express.json({ limit: "2gb" })); // Use Express built-in JSON parser
 app.use(express.urlencoded({ limit: "2gb", extended: true })); // Use Express built-in URL-encoded parser
@@ -25,12 +29,8 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let dirPath = "uploads";
     if (!!file.fieldname) {
-      if (file.fieldname === "profilePicture") {
-        dirPath = "uploads/profiles";
-      } else if (file.fieldname === "pimage") {
-        dirPath = `uploads/${req.user._id}/post/images`;
-      } else if (file.fieldname === "pvideo") {
-        dirPath = `uploads/${req.user._id}/post/videos`;
+      if (file.fieldname === "cImage") {
+        dirPath = "uploads/product/category";
       }
     }
 
@@ -49,18 +49,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage: storage,
-});
-
-var cpUpload = upload.fields([
+  // limits: { fileSize: 2 * 1024 * 1024 }, // Optional: Limit file size to 2MB
+}).fields([
   {
-    name: "profilePicture",
-    maxCount: 1,
-  }, {
-    name: "pimage",
-    maxCount: 15,
-  }, {
-    name: "pvideo",
-    maxCount: 15,
+    name: "cImage",
+    maxCount: 1, // Maximum of 1 file per field
   },
 ]);
 
@@ -68,8 +61,9 @@ var cpUpload = upload.fields([
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api/auth", cpUpload, authRoute);
-// app.use("/api/file", verifyToken, cpUpload, fileUploadRoute);
+app.use("/api/auth", authRoute);
+app.use("/api/file", upload, fileUploadRoute);
+app.use("/api/product/category", productCategoryRoute);
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).send({

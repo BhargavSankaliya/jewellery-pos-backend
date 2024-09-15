@@ -134,40 +134,20 @@ const RegisterUserController = async (req, res, next) => {
 const FileUpload = async (req, res, next) => {
   try {
     const file = [];
-    const configURL = config.productionURL;
+    const configURL = config.URL;
 
-    let profilePicture = "";
-    let pimage = [];
-    let pvideo = [];
+    let cImage = '';
 
-    if (req.files && !!req.files.profilePicture && req.files.profilePicture.length > 0) {
-      req.files.profilePicture.map((x) => {
-        profilePicture = configURL + x.destination + "/" + x.filename
+    if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
+      req.files.cImage.map((x) => {
+        cImage = configURL + x.destination + "/" + x.filename
       })
     }
     else {
-      profilePicture = "";
+      cImage = "";
     }
 
-    if (req.files && !!req.files.pimage && req.files.pimage.length > 0) {
-      req.files.pimage.map((x) => {
-        pimage.push(configURL + x.destination + "/" + x.filename)
-      });
-    }
-    else {
-      pimage = []
-    }
-
-    if (req.files && !!req.files.pvideo && req.files.pvideo.length > 0) {
-      req.files.pvideo.map(
-        (x) => pvideo.push(configURL + x.destination + "/" + x.filename)
-      );
-    }
-    else {
-      pvideo = []
-    }
-
-    createResponse({ profilePicture, pimage, pvideo }, 200, 'File Upload Successfully.', res)
+    createResponse({ cImage }, 200, 'File Upload Successfully.', res)
 
   } catch (error) {
     errorHandler(error, res, res)
