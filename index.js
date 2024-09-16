@@ -4,6 +4,7 @@ const app = express();
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const authRoute = require("./routes/auth");
+const adsRoute = require("./routes/adsRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const path = require("path");
@@ -32,6 +33,9 @@ const storage = multer.diskStorage({
       if (file.fieldname === "cImage") {
         dirPath = "uploads/product/category";
       }
+      else if (file.fieldname === "adsImage" || file.fieldname === "adsVideo") {
+        dirPath = "uploads/ads";
+      }
     }
 
     if (!fs.existsSync(dirPath)) {
@@ -55,6 +59,14 @@ const upload = multer({
     name: "cImage",
     maxCount: 1, // Maximum of 1 file per field
   },
+  {
+    name: "adsImage",
+    maxCount: 1, // Maximum of 1 file per field
+  },
+  {
+    name: "adsVideo",
+    maxCount: 1, // Maximum of 1 file per field
+  },
 ]);
 
 
@@ -62,6 +74,7 @@ const upload = multer({
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoute);
+app.use("/api/ads", adsRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product/category", productCategoryRoute);
 

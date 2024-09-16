@@ -62,7 +62,7 @@ productCategoryController.list = async (req, res, next) => {
 
     let categoryList = await ProductCategory.aggregate(aggragationQuery);
     if (categoryList.length != 0) {
-      createResponse({ categoryList }, 200, "Category list fetched successfully.", res);
+      createResponse(categoryList, 200, "Category list fetched successfully.", res);
       return
     }
 
@@ -77,7 +77,7 @@ productCategoryController.getByCategoryId = async (req, res, next) => {
 
     let categoryList = await ProductCategory.findById(req.query._id);
     if (!!categoryList) {
-      createResponse({ categoryList }, 200, "Category Details fetched successfully.", res);
+      createResponse(categoryList, 200, "Category Details fetched successfully.", res);
       return
     }
 

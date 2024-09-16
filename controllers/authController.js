@@ -137,6 +137,8 @@ const FileUpload = async (req, res, next) => {
     const configURL = config.URL;
 
     let cImage = '';
+    let adsImage = '';
+    let adsVideo = '';
 
     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
       req.files.cImage.map((x) => {
@@ -147,7 +149,25 @@ const FileUpload = async (req, res, next) => {
       cImage = "";
     }
 
-    createResponse({ cImage }, 200, 'File Upload Successfully.', res)
+    if (req.files && !!req.files.adsImage && req.files.adsImage.length > 0) {
+      req.files.adsImage.map((x) => {
+        adsImage = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      adsImage = '';
+    }
+
+    if (req.files && !!req.files.adsVideo && req.files.adsVideo.length > 0) {
+      req.files.adsVideo.map((x) => {
+        adsVideo = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      adsVideo = '';
+    }
+
+    createResponse({ cImage, adsVideo, adsImage }, 200, 'File Upload Successfully.', res)
 
   } catch (error) {
     errorHandler(error, res, res)
