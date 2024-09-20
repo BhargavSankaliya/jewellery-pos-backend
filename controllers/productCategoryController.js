@@ -66,7 +66,7 @@ productCategoryController.list = async (req, res, next) => {
       return
     }
 
-    createResponse(null, 404, "No category found.", res);
+    createResponse(null, 200, "No category found.", res);
   } catch (error) {
     errorHandler(error, req, res)
   }

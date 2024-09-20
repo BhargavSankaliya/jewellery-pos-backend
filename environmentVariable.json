@@ -1,5 +1,5 @@
 {
-    "MONGO_URL": "mongodb+srv://vidhaninfotech:VidhanInfotech%401234@manager.psm2err.mongodb.net/ReNew360?retryWrites=true&w=majority",
+    "MONGO_URL": "mongodb://localhost:27017",
     "JWT_SECRET": "your_very_secret_key",
     "URL": "http://localhost:3660/",
     "productionURL": "http://renew360api.vidhaninfotech.com/",

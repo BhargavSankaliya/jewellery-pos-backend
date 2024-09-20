@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { CustomError, errorHandler } = require("../middlewares/error");
-const config = require("../environmentVariable.json")
+const config = require("../environmentVariable.json");
+const StoreModel = require("../models/storeModel");
 
 const verifyToken = async (req, res, next) => {
   try {
@@ -19,20 +20,20 @@ const verifyToken = async (req, res, next) => {
     } catch (err) {
       throw new CustomError("Invalid token", 401);
     }
-    const userId = decoded._id;
-    const user = await User.findOne({
-      _id: userId,
+    const storeId = decoded._id;
+    const store = await StoreModel.findOne({
+      _id: storeId,
     });
 
-    if (user.jwtToken !== token) {
+    if (store.jwtToken !== token) {
       throw new CustomError("Unauthorized! Token mismatch", 401);
     }
 
-    if (!user) {
+    if (!store) {
       throw new CustomError("Invalid or expired token!", 400);
     }
 
-    req.user = user;
+    req.store = store;
     next();
   } catch (error) {
     errorHandler(error, req, res)

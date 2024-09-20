@@ -8,128 +8,8 @@ const { sendOTPEmail, sendOTPPhone } = require("../helper/otpHelper");
 const mongoose = require("mongoose");
 const config = require("../environmentVariable.json");
 const createResponse = require("../middlewares/response.js");
-
-// User Registartion API
-const RegisterUserController = async (req, res, next) => {
-  try {
-
-    const {
-      email,
-      phoneNumber,
-      password,
-      username,
-      deviceId,
-      deviceName,
-      fcmToken,
-      isAdmin,
-      firstName,
-      lastName,
-      isVerified,
-    } = req.body;
-
-    let profilePicture = "";
-    if (req.files.profilePicture && req.files.profilePicture.length > 0) {
-      profilePicture = config.URL + req.files.profilePicture[0].destination + "/" + req.files.profilePicture[0].filename;
-    }
-
-    if (!!req.body.profilePicture) {
-      profilePicture = req.body.profilePicture
-    }
-
-
-    let query = [
-      {
-        $match: {
-          $and: [
-            {
-              isDeleted: false
-            },
-            {
-              $or: [
-                {
-                  email: email
-                },
-                {
-                  phoneNumber: phoneNumber
-                },
-                {
-                  username: username
-                }
-              ]
-            }
-          ]
-        }
-      }
-    ]
-
-    const findUser = await User.aggregate(query);
-
-    if (findUser.length > 0) {
-      const findedUser = findUser[0];
-      if (findedUser.email === email) {
-        throw new CustomError("Email already exists!", 400);
-      }
-      if (findedUser.phoneNumber === phoneNumber) {
-        throw new CustomError("Phone number already exists!", 400);
-      }
-      if (findedUser.username === username) {
-        throw new CustomError("Username already exists!", 400);
-      }
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hashSync(password, salt);
-
-    const otpCode = Math.floor(100000 + Math.random() * 900000);
-
-    const newUser = new User({
-      email,
-      phoneNumber,
-      password: hashedPassword,
-      profilePicture: profilePicture,
-      username,
-      deviceId,
-      deviceName,
-      firstName,
-      lastName,
-      fcmToken,
-      isAdmin: isAdmin || false,
-      isVerified: isVerified || false,
-      otp: otpCode,
-      otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-
-    const savedUser = await newUser.save();
-
-    const newUserFollow = new Follow({
-      userId: savedUser._id,
-      following: [],
-      followers: [],
-      requestFollow: [],
-    });
-
-    await newUserFollow.save();
-
-    console.log("Follow document created for user:", savedUser._id);
-
-    const token = jwt.sign({ _id: savedUser._id }, config.JWT_SECRET, {
-      expiresIn: "90d",
-    });
-
-    newUser.jwtToken = token;
-    newUser.save();
-
-    if (email) {
-      await sendOTPEmail(email, otpCode, req, res);
-    } else if (phoneNumber) {
-      await sendOTPPhone(phoneNumber, otpCode, req, res);
-    }
-    createResponse(savedUser, 200, "User registered successfully. Please verify your email/phone using the OTP sent.", res);
-  } catch (error) {
-    // next(error);
-    errorHandler(error, req, res)
-  }
-};
+const StoreModel = require("../models/storeModel.js");
+const authController = {}
 
 const FileUpload = async (req, res, next) => {
   try {
@@ -174,33 +54,10 @@ const FileUpload = async (req, res, next) => {
   }
 }
 
-//  Verify OTP API
-const VerifyOtpController = async (req, res, next) => {
-  try {
-    const { userId, otp } = req.body;
-
-    const user = await User.findOne({ _id: userId, otp });
-
-    if (!user || new Date() > user.otpExpiresAt) {
-      throw new CustomError("Invalid or expired OTP.", 400);
-    }
-
-    // Mark user as verified
-    user.isVerified = true;
-    user.otp = undefined; // Clear the OTP
-    user.otpExpiresAt = undefined; // Clear the OTP expiration
-
-    await user.save();
-    createResponse(null, 200, "OTP verified successfully. Your account is now verified.", res);
-  } catch (error) {
-    errorHandler(error, req, res)
-  }
-};
-
 // resend otp api
-const ResendOtpController = async (req, res, next) => {
+authController.ResendOtpController = async (req, res, next) => {
   try {
-    const { userId } = req.query;
+    const { storeId } = req.query;
 
     const otpCode = Math.floor(100000 + Math.random() * 900000);
 
@@ -209,15 +66,11 @@ const ResendOtpController = async (req, res, next) => {
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
     };
 
-    await User.findOneAndUpdate({ _id: userId }, updateObject);
+    await StoreModel.findOneAndUpdate({ _id: storeId }, updateObject);
 
-    const user = await User.findOne({ _id: userId });
+    const store = await StoreModel.findOne({ _id: storeId });
 
-    if (user.email) {
-      await sendOTPEmail(user.email, otpCode, req, res);
-    } else if (user.phoneNumber) {
-      await sendOTPPhone(user.phoneNumber, otpCode, req, res);
-    }
+    await sendOTPEmail(store.email, otpCode, req, res);
 
     createResponse(null, 200, "Please verify your email/phone using the OTP resent.", res);
 
@@ -227,20 +80,13 @@ const ResendOtpController = async (req, res, next) => {
 };
 
 // Login API
-const LoginUserController = async (req, res, next) => {
+authController.LoginUserController = async (req, res, next) => {
   try {
-    const { email, phoneNumber, password, deviceId, deviceName, fcmToken } = req.body;
+    const { email, password } = req.body;
 
-    if (!deviceId || !deviceName || !fcmToken) {
+    if (!email) {
       throw new CustomError(
-        "Please add FCM token details!",
-        400
-      );
-    }
-
-    if (!email && !phoneNumber) {
-      throw new CustomError(
-        "Email or phone number is required for login!",
+        "Email is required for login!",
         400
       );
     }
@@ -252,63 +98,49 @@ const LoginUserController = async (req, res, next) => {
       );
     }
 
-    let user;
+    let store = await StoreModel.findOne({ email, isDeleted: false });
 
-    if (email) {
-      user = await User.findOne({ email });
-    } else if (phoneNumber) {
-      user = await User.findOne({ phoneNumber });
+    if (!store) {
+      throw new CustomError("Store not found!", 404);
     }
 
-    if (!user) {
-      throw new CustomError("User not found!", 404);
-    }
-
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, store.password);
     if (!match) {
-      throw new CustomError("Wrong credentials!", 401);
+      throw new CustomError("Wrong credentials!", 400);
     }
 
-    let updateObject = {
-      deviceId: req.body.deviceId,
-      deviceName: req.body.deviceName,
-      fcmToken: req.body.fcmToken,
-    };
-
-    await User.findOneAndUpdate({ _id: user._id }, updateObject);
-
-    if (email) {
-      user = await User.findOne({ email });
-    } else if (phoneNumber) {
-      user = await User.findOne({ phoneNumber });
-    }
-
-    const { password: userPassword, ...userData } = user._doc;
-
-    const token = jwt.sign({ _id: user._id }, config.JWT_SECRET, {
+    const token = jwt.sign({ _id: store._id }, config.JWT_SECRET, {
       expiresIn: "90d",
     });
 
-    user.jwtToken = token;
-    user.save();
+    store.jwtToken = token;
+    store.save();
 
-    createResponse({ ...userData, token }, 200, "Login Successfully.", res);
-  } catch (error) {
-    errorHandler(error, req, res)
-  }
-};
+    let responseObject = {
+      name: store.name,
+      address: store.address,
+      logo: store.logo,
+      description: store.description,
+      gstNumber: store.gstNumber,
+      phone: store.phone,
+      email: store.email,
+      instagramUrl: store.instagramUrl,
+      facebookUrl: store.facebookUrl,
+      youtubeUrl: store.youtubeUrl,
+      twitterUrl: store.twitterUrl,
+      locations: store.locations,
+      status: store.status,
+      token: token
+    }
 
-// Logout API
-const LogoutUserController = async (req, res, next) => {
-  try {
-    createResponse(null, 200, "User logged out successfully!", res);
+    createResponse(responseObject, 200, "Login Successfully.", res);
   } catch (error) {
     errorHandler(error, req, res)
   }
 };
 
 // Forget Password API
-const forgotPassword = async (req, res, next) => {
+authController.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -316,22 +148,22 @@ const forgotPassword = async (req, res, next) => {
       throw new CustomError("Email is required!", 400);
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new CustomError("User not found!", 404);
+    const Store = await StoreModel.findOne({ email });
+    if (!Store) {
+      throw new CustomError("Store not found!", 404);
     }
 
     const resetToken = Math.floor(100000 + Math.random() * 900000);
     const resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpiry = resetTokenExpiry;
-    await user.save();
+    Store.resetPasswordToken = resetToken;
+    Store.resetPasswordExpiry = resetTokenExpiry;
+    await Store.save();
 
     // const resetUrl = `${config.URL}/reset-password?token=${resetToken}`;
-    await sendOTPEmail(email, resetToken, req, res);
+    // await sendOTPEmail(email, resetToken, req, res);
 
-    createResponse({ userId: user._id }, 200, "Please verify your OTP for update password!", res);
+    return createResponse({ storeId: Store._id.toString() }, 200, "Please verify your OTP for update password!", res);
 
   } catch (error) {
     errorHandler(error, req, res)
@@ -339,24 +171,24 @@ const forgotPassword = async (req, res, next) => {
 };
 
 //  Verify OTP API
-const VerifyOtpForUpdatePasswordController = async (req, res, next) => {
+authController.VerifyOtpForUpdatePasswordController = async (req, res, next) => {
   try {
-    const { userId, resetPasswordToken } = req.body;
+    const { storeId, resetPasswordToken } = req.body;
 
-    const user = await User.findOne({ _id: userId, resetPasswordToken });
+    const store = await StoreModel.findOne({ _id: storeId, resetPasswordToken });
 
-    if (!user || new Date() > user.resetPasswordExpiry) {
+    if (!store || new Date() > store.resetPasswordExpiry) {
       throw new CustomError("Invalid or expired OTP.", 400);
     }
 
-    // Mark user as verified
-    user.resetPasswordToken = undefined; // Clear the OTP
-    user.resetPasswordExpiry = undefined; // Clear the OTP expiration
-    user.resetPasswordTokenVerify = true;
+    // Mark store as verified
+    store.resetPasswordToken = undefined; // Clear the OTP
+    store.resetPasswordExpiry = undefined; // Clear the OTP expiration
+    store.resetPasswordTokenVerify = true;
 
-    await user.save();
+    await store.save();
 
-    createResponse({ userId: userId }, 200, "OTP verified successfully.", res);
+    createResponse({ storeId: storeId }, 200, "OTP verified successfully.", res);
 
   } catch (error) {
     errorHandler(error, req, res)
@@ -364,28 +196,28 @@ const VerifyOtpForUpdatePasswordController = async (req, res, next) => {
 };
 
 //  Verify OTP API
-const updatePasswordAfterVerifyOTP = async (req, res, next) => {
+authController.updatePasswordAfterVerifyOTP = async (req, res, next) => {
   try {
-    const { userId, password } = req.body;
+    const { storeId, password } = req.body;
 
     if (!password) {
       throw new CustomError("Password is required!", 400);
     }
 
-    const user = await User.findOne({
-      _id: userId,
+    const store = await StoreModel.findOne({
+      _id: storeId,
       resetPasswordTokenVerify: true,
     });
 
-    if (!user) {
+    if (!store) {
       throw new CustomError("Please Verify OTP!", 400);
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    user.resetPasswordTokenVerify = false;
+    store.password = await bcrypt.hash(password, salt);
+    store.resetPasswordTokenVerify = false;
 
-    await user.save();
+    await store.save();
     createResponse(null, 200, "Password has been reset successfully!", res);
   } catch (error) {
     errorHandler(error, req, res)
@@ -393,7 +225,7 @@ const updatePasswordAfterVerifyOTP = async (req, res, next) => {
 };
 
 // Reset Password Controller
-const resetPassword = async (req, res, next) => {
+authController.resetPassword = async (req, res, next) => {
   try {
     const { password, newPassword } = req.body;
 
@@ -404,11 +236,11 @@ const resetPassword = async (req, res, next) => {
       throw new CustomError("New Password is required!", 400);
     }
 
-    const user = req.user;
+    const store = req.store;
 
     const salt = await bcrypt.genSalt(10);
     const oldPassword = await bcrypt.hash(password, salt);
-    if (user.password != oldPassword) {
+    if (store.password != oldPassword) {
       throw new CustomError("Password is not Match!", 400);
     }
 
@@ -419,9 +251,9 @@ const resetPassword = async (req, res, next) => {
       );
     }
 
-    user.password = await bcrypt.hash(newPassword, salt);
+    store.password = await bcrypt.hash(newPassword, salt);
 
-    await user.save();
+    await store.save();
     createResponse(null, 200, "Password has been reset successfully!", res);
 
   } catch (error) {
@@ -429,16 +261,16 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-const refetchUserController = async (req, res, next) => {
-  const token = req.cookies.token;
+authController.refetchUserController = async (req, res, next) => {
+  const token = req.store.token;
   jwt.verify(token, config.JWT_SECRET, {}, async (err, data) => {
     if (err) {
       throw new CustomError(err, 404);
     }
     try {
       const id = data._id;
-      const user = await User.findOne({ _id: id });
-      createResponse(user, 200, "success", res);
+      const store = await StoreModel.findOne({ _id: id });
+      createResponse(store, 200, "success", res);
 
     } catch (error) {
       errorHandler(error, req, res)
@@ -451,16 +283,7 @@ const convertIdToObjectId = (id) => {
 };
 
 module.exports = {
-  RegisterUserController,
-  VerifyOtpController,
-  ResendOtpController,
-  LoginUserController,
-  LogoutUserController,
-  refetchUserController,
-  forgotPassword,
-  resetPassword,
   convertIdToObjectId,
-  VerifyOtpForUpdatePasswordController,
-  updatePasswordAfterVerifyOTP,
-  FileUpload
+  FileUpload,
+  authController
 };

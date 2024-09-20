@@ -2,25 +2,22 @@ const { convertIdToObjectId } = require("../controllers/authController");
 
 const commonFilter = {};
 
-commonFilter.userCommonObject = {
-    _id: 0,
+commonFilter.storeCommonObject = {
+    _id: 1,
     id: "$_id",
-    firstName: 1,
-    lastName: 1,
-    username: 1,
+    name: 1,
+    logo: 1,
+    address: 1,
+    description: 1,
+    gstNumber: 1,
+    phone: 1,
     email: 1,
-    profilePicture: 1,
-    phoneNumber: 1,
-    isPrivate: 1,
-    fullName: {
-        $concat: ["$firstName", " ", "$lastName"]
-    },
+    instagramUrl: 1,
+    facebookUrl: 1,
+    youtubeUrl: 1,
+    twitterUrl: 1,
+    locations: 1,
     status: 1,
-    createdAt: 1,
-    bio: 1,
-    gender: 1,
-    businessType: 1,
-    location: 1,
 }
 
 

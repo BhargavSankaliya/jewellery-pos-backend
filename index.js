@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const authRoute = require("./routes/auth");
 const adsRoute = require("./routes/adsRoute");
+const storeRoute = require("./routes/storeRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const path = require("path");
@@ -74,9 +75,10 @@ const upload = multer({
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoute);
-app.use("/api/ads", adsRoute);
+app.use("/api/ads", verifyToken, adsRoute);
+app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
-app.use("/api/product/category", productCategoryRoute);
+app.use("/api/product/category", verifyToken, productCategoryRoute);
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).send({

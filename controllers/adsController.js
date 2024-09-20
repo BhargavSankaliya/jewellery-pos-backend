@@ -101,7 +101,7 @@ adsController.updateAdsStatus = async (req, res, next) => {
 
     let status = getAds.status == 'Active' ? 'Inactive' : 'Active'
 
-    await ProductCategory.findOneAndUpdate({ _id: convertIdToObjectId(req.query._id) }, { status });
+    await AdsModel.findOneAndUpdate({ _id: convertIdToObjectId(req.query._id) }, { status });
 
     createResponse({ status }, 200, status == 'Active' ? 'Activated Successfully.' : 'Inactivated Successfuly.', res);
   } catch (error) {
