@@ -18,6 +18,7 @@ commonFilter.storeCommonObject = {
     twitterUrl: 1,
     locations: 1,
     status: 1,
+    role: 1
 }
 
 

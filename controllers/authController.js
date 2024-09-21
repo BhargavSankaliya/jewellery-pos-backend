@@ -114,6 +114,11 @@ authController.LoginUserController = async (req, res, next) => {
       throw new CustomError("Store not found!", 404);
     }
 
+    if (store.status == 'Inactive') {
+      throw new CustomError("Store is not activated!", 404);
+    }
+
+
     const match = await bcrypt.compare(password, store.password);
     if (!match) {
       throw new CustomError("Wrong credentials!", 400);

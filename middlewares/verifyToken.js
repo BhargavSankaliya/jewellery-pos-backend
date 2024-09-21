@@ -33,6 +33,10 @@ const verifyToken = async (req, res, next) => {
       throw new CustomError("Invalid or expired token!", 400);
     }
 
+    if (store.status == 'Inactive') {
+      throw new CustomError("Store is inactivated!", 401);
+    }
+
     req.store = store;
     next();
   } catch (error) {

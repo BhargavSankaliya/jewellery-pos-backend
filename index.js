@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const authRoute = require("./routes/auth");
 const adsRoute = require("./routes/adsRoute");
+const machineRoute = require("./routes/machineRoute");
 const storeRoute = require("./routes/storeRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
@@ -83,6 +84,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoute);
 app.use("/api/ads", verifyToken, adsRoute);
+app.use("/api/machine", verifyToken, machineRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
