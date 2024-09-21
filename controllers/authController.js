@@ -19,6 +19,7 @@ const FileUpload = async (req, res, next) => {
     let cImage = '';
     let adsImage = '';
     let adsVideo = '';
+    let storeLogo = '';
 
     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
       req.files.cImage.map((x) => {
@@ -47,7 +48,16 @@ const FileUpload = async (req, res, next) => {
       adsVideo = '';
     }
 
-    createResponse({ cImage, adsVideo, adsImage }, 200, 'File Upload Successfully.', res)
+    if (req.files && !!req.files.storeLogo && req.files.storeLogo.length > 0) {
+      req.files.storeLogo.map((x) => {
+        storeLogo = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      storeLogo = '';
+    }
+
+    createResponse({ cImage, adsVideo, adsImage, storeLogo }, 200, 'File Upload Successfully.', res)
 
   } catch (error) {
     errorHandler(error, res, res)
@@ -129,6 +139,7 @@ authController.LoginUserController = async (req, res, next) => {
       youtubeUrl: store.youtubeUrl,
       twitterUrl: store.twitterUrl,
       locations: store.locations,
+      role: store.role,
       status: store.status,
       token: token
     }
@@ -276,6 +287,9 @@ authController.refetchUserController = async (req, res, next) => {
       errorHandler(error, req, res)
     }
   });
+};
+authController.getRoleOfAuthUser = async (req, res, next) => {
+  return createResponse(req.store.role, 200, 'Role get successfully', res);
 };
 
 const convertIdToObjectId = (id) => {

@@ -37,6 +37,9 @@ const storage = multer.diskStorage({
       else if (file.fieldname === "adsImage" || file.fieldname === "adsVideo") {
         dirPath = "uploads/ads";
       }
+      else if (file.fieldname === 'storeLogo') {
+        dirPath = "uploads/storeLogo";
+      }
     }
 
     if (!fs.existsSync(dirPath)) {
@@ -66,6 +69,10 @@ const upload = multer({
   },
   {
     name: "adsVideo",
+    maxCount: 1, // Maximum of 1 file per field
+  },
+  {
+    name: "storeLogo",
     maxCount: 1, // Maximum of 1 file per field
   },
 ]);

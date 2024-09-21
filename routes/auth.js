@@ -9,6 +9,9 @@ router.get("/resend-otp", authController.ResendOtpController)
 //LOGIN
 router.post("/login", authController.LoginUserController)
 
+//LOGIN
+router.get("/role", verifyToken, authController.getRoleOfAuthUser)
+
 //FETCH CURRENT USER
 router.get("/refetch", authController.refetchUserController)
 
