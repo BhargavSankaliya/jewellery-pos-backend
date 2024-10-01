@@ -1,4 +1,3 @@
-const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { CustomError, errorHandler } = require("../middlewares/error");
@@ -20,6 +19,8 @@ const FileUpload = async (req, res, next) => {
     let adsImage = '';
     let adsVideo = '';
     let storeLogo = '';
+    let productImage = '';
+    let productVideo = '';
 
     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
       req.files.cImage.map((x) => {
@@ -37,6 +38,23 @@ const FileUpload = async (req, res, next) => {
     }
     else {
       adsImage = '';
+    }
+
+    if (req.files && !!req.files.productImage && req.files.productImage.length > 0) {
+      req.files.productImage.map((x) => {
+        productImage = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      productImage = '';
+    }
+    if (req.files && !!req.files.productVideo && req.files.productVideo.length > 0) {
+      req.files.productVideo.map((x) => {
+        productVideo = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      productVideo = '';
     }
 
     if (req.files && !!req.files.adsVideo && req.files.adsVideo.length > 0) {
@@ -57,7 +75,18 @@ const FileUpload = async (req, res, next) => {
       storeLogo = '';
     }
 
-    createResponse({ cImage, adsVideo, adsImage, storeLogo }, 200, 'File Upload Successfully.', res)
+    if (req.files && !!req.files.machineLogo && req.files.machineLogo.length > 0) {
+      req.files.machineLogo.map((x) => {
+        machineLogo = configURL + x.destination + "/" + x.filename
+      })
+    }
+    else {
+      machineLogo = '';
+    }
+
+    createResponse({
+      cImage, adsVideo, adsImage, storeLogo, machineLogo, productImage, productVideo
+    }, 200, 'File Upload Successfully.', res)
 
   } catch (error) {
     errorHandler(error, res, res)
@@ -108,7 +137,7 @@ authController.LoginUserController = async (req, res, next) => {
       );
     }
 
-    let store = await StoreModel.findOne({ email, isDeleted: false });
+    let store = await StoreModel.findOne({ email: email.toLocaleLowerCase(), isDeleted: false });
 
     if (!store) {
       throw new CustomError("Store not found!", 404);

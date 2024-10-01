@@ -12,7 +12,7 @@ const storeController = {};
 storeController.createUpdateStore = async (req, res, next) => {
   try {
 
-    let { name, logo, address, description, email, phone, password, gstNumber, instagramUrl, facebookUrl, youtubeUrl, twitterUrl, locations } = req.body;
+    let { name, logo, address, description, email, phone, password, gstNumber, instagramUrl, facebookUrl, youtubeUrl, twitterUrl, locations, jobTitle, businessType, theme, color, companyName, companyWebsite } = req.body;
 
 
 
@@ -46,6 +46,12 @@ storeController.createUpdateStore = async (req, res, next) => {
       facebookUrl: facebookUrl ? facebookUrl : '',
       youtubeUrl: youtubeUrl ? youtubeUrl : '',
       twitterUrl: twitterUrl ? twitterUrl : '',
+      jobTitle: jobTitle ? jobTitle : '',
+      businessType: businessType ? businessType : '',
+      theme: theme ? theme : '',
+      color: color ? color : '',
+      companyName: companyName ? companyName : '',
+      companyWebsite: companyWebsite ? companyWebsite : '',
       locations: locations && locations.length > 0 ? locations : [],
     })
 
@@ -53,7 +59,7 @@ storeController.createUpdateStore = async (req, res, next) => {
       storeData
     );
 
-    createResponse(null,200, "Store Created Successfully.", res);
+    createResponse(null, 200, "Store Created Successfully.", res);
   } catch (error) {
     errorHandler(error, req, res)
   }

@@ -16,6 +16,12 @@ commonFilter.storeCommonObject = {
     facebookUrl: 1,
     youtubeUrl: 1,
     twitterUrl: 1,
+    jobTitle: 1,
+    businessType: 1,
+    companyName: 1,
+    theme: 1,
+    color: 1,
+    companyWebsite: 1,
     locations: 1,
     status: 1,
     role: 1

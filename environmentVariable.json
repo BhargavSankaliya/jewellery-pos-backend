@@ -1,8 +1,8 @@
 {
     "MONGO_URL": "mongodb://localhost:27017",
     "JWT_SECRET": "your_very_secret_key",
-    "URL": "http://localhost:3660/",
-    "productionURL": "http://renew360api.vidhaninfotech.com/",
+    "URL": "http://51.20.80.241:3660/",
+    "productionURL": "http://51.20.80.241:3660/",
     "PORT": "3660",
     "HOST": "mail.vidhaninfotech.com",
     "SECURE": false,

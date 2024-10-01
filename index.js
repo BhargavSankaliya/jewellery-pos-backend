@@ -7,6 +7,7 @@ const authRoute = require("./routes/auth");
 const adsRoute = require("./routes/adsRoute");
 const machineRoute = require("./routes/machineRoute");
 const storeRoute = require("./routes/storeRoute");
+const productRoute = require("./routes/productRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const path = require("path");
@@ -40,6 +41,12 @@ const storage = multer.diskStorage({
       }
       else if (file.fieldname === 'storeLogo') {
         dirPath = "uploads/storeLogo";
+      }
+      else if (file.fieldname === 'machineLogo') {
+        dirPath = "uploads/machineLogo";
+      }
+      else if (file.fieldname === 'productImage' || file.fieldname === 'productVideo') {
+        dirPath = "uploads/product";
       }
     }
 
@@ -76,6 +83,18 @@ const upload = multer({
     name: "storeLogo",
     maxCount: 1, // Maximum of 1 file per field
   },
+  {
+    name: "machineLogo",
+    maxCount: 1, // Maximum of 1 file per field
+  },
+  {
+    name: "productImage",
+    maxCount: 15, // Maximum of 1 file per field
+  },
+  {
+    name: "productVideo",
+    maxCount: 15, // Maximum of 1 file per field
+  },
 ]);
 
 
@@ -87,6 +106,7 @@ app.use("/api/ads", verifyToken, adsRoute);
 app.use("/api/machine", verifyToken, machineRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
+app.use("/api/product", verifyToken, productRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
 
 app.use((err, req, res, next) => {
@@ -102,6 +122,14 @@ app.use((err, req, res, next) => {
 });
 
 app.use(errorHandler);
+
+// Serve the static files from the dist directory
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Serve the index.html file for all requests (for Angular routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/index.html'));
+});
 
 const http = require("http");
 let server = http.createServer(app);

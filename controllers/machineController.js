@@ -3,13 +3,13 @@ const mongoose = require("mongoose");
 const config = require("../environmentVariable.json");
 const createResponse = require("../middlewares/response.js");
 const { convertIdToObjectId } = require("./authController.js");
-const MachineModel = require("../models/machineModel.js");
+const { MachineModel } = require("../models/machineModel.js");
 const StoreModel = require("../models/storeModel.js");
 const machineController = {};
 
 machineController.createupdate = async (req, res, next) => {
   try {
-    let { pin, ads, machineNumber } = req.body;
+    let { pin, ads, deviceNumber } = req.body;
     let storeObjectId = convertIdToObjectId(req.body.storeId);
 
     let findStore = await StoreModel.findById(storeObjectId)
@@ -18,8 +18,8 @@ machineController.createupdate = async (req, res, next) => {
       throw new CustomError("Store is not found.", 400);
     }
 
-    if (!machineNumber) {
-      throw new CustomError("Please enter machine number.", 400);
+    if (!deviceNumber) {
+      throw new CustomError("Please enter device number.", 400);
     }
     if (!pin || pin.toString().length != 6) throw new CustomError("Please enter six digit pin.", 400);
 
@@ -57,6 +57,12 @@ machineController.list = async (req, res, next) => {
         storeId: req.store._id
       });
     }
+    if (req.query.storeId && req.query.storeId != 'null') {
+      condition["$and"].push({
+        storeId: convertIdToObjectId(req.query.storeId)
+      });
+    }
+
 
     let aggragationQuery = [
       {
@@ -68,7 +74,7 @@ machineController.list = async (req, res, next) => {
           _id: 1,
           id: "$_id",
           machineId: 1,
-          machineNumber: 1,
+          deviceNumber: 1,
           ads: 1,
           pin: 1,
           storeId: 1,
@@ -93,6 +99,7 @@ machineController.list = async (req, res, next) => {
       {
         $addFields: {
           storeName: "$storeDetails.name",
+          storeAddress: "$storeDetails.address",
         },
       },
     ]

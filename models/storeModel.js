@@ -23,9 +23,9 @@ const locationSchema = new mongoose.Schema({
     required: [true, 'Country is required.'],
     trim: true
   },
-  shopName: {
+  pinCode: {
     type: String,
-    required: [true, 'Shop Name is required.'],
+    required: [true, 'Pincode is required.'],
     trim: true
   }
 });
@@ -62,16 +62,47 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
-    phone: {
+    theme: {
       type: String,
-      required: [true, 'Phone number is required.'],
+      required: false,
+    },
+    color: {
+      type: String,
+      required: false,
+    },
+    jobTitle: {
+      type: String,
+      required: false,
       trim: true,
       default: ''
+    },
+    businessType: {
+      type: String,
+      required: false,
+      trim: true,
+      default: ''
+    },
+    companyName: {
+      type: String,
+      required: false,
+      trim: true,
+      default: ''
+    },
+    companyWebsite: {
+      type: String,
+      required: false,
+      trim: true,
+      default: ''
+    },
+    phone: {
+      type: Array,
+      default: []
     },
     email: {
       type: String,
       required: [true, 'Email is requied.'],
       trim: true,
+      lowercase: true,
       validate: {
         validator: function (v) {
           return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);

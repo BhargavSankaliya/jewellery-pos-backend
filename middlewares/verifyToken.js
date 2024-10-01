@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
 const { CustomError, errorHandler } = require("../middlewares/error");
 const config = require("../environmentVariable.json");
 const StoreModel = require("../models/storeModel");
