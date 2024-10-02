@@ -98,7 +98,7 @@ machineController.list = async (req, res, next) => {
       },
       {
         $addFields: {
-          storeName: "$storeDetails.name",
+          companyName: "$storeDetails.companyName",
           storeAddress: "$storeDetails.address",
         },
       },

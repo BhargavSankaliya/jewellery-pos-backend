@@ -56,7 +56,7 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Category is required'],
     },
     subCategory: {
-      type: String,
+      type: Array,
       required: false,
     },
     gender: [{
@@ -100,6 +100,11 @@ const productSchema = new mongoose.Schema(
       required: false,
     },
     stoneColor: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    stoneType: {
       type: String,
       default: '',
       required: false,

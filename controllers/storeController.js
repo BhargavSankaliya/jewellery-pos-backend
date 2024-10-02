@@ -33,27 +33,8 @@ storeController.createUpdateStore = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hashSync(password, salt);
 
-    let storeData = new StoreModel({
-      name: name ? name : '',
-      logo: logo ? logo : '',
-      email: email,
-      address: address ? address : '',
-      password: hashedPassword,
-      description: description ? description : '',
-      phone: phone ? phone : '',
-      gstNumber: gstNumber ? gstNumber : '',
-      instagramUrl: instagramUrl ? instagramUrl : '',
-      facebookUrl: facebookUrl ? facebookUrl : '',
-      youtubeUrl: youtubeUrl ? youtubeUrl : '',
-      twitterUrl: twitterUrl ? twitterUrl : '',
-      jobTitle: jobTitle ? jobTitle : '',
-      businessType: businessType ? businessType : '',
-      theme: theme ? theme : '',
-      color: color ? color : '',
-      companyName: companyName ? companyName : '',
-      companyWebsite: companyWebsite ? companyWebsite : '',
-      locations: locations && locations.length > 0 ? locations : [],
-    })
+    let storeData = req.body;
+    storeData.password = hashedPassword
 
     let storeCreated = await StoreModel.create(
       storeData

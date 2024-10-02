@@ -32,9 +32,9 @@ const locationSchema = new mongoose.Schema({
 
 const storeSchema = new mongoose.Schema(
   {
-    name: {
+    companyName: {
       type: String,
-      required: [true, 'Name is requied.'],
+      required: [true, 'Company Name is requied.'],
       trim: true,
       default: ''
     },
@@ -50,6 +50,26 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    pinCode: {
+      type: String,
+      required: [true, 'PINCODE is required.'],
+      default: ''
+    },
+    country: {
+      type: String,
+      required: [true, 'Country is required.'],
+      default: ''
+    },
+    state: {
+      type: String,
+      required: false,
+      default: ''
+    },
+    city: {
+      type: String,
+      required: false,
+      default: ''
+    },
     description: {
       type: String,
       required: false,
@@ -62,11 +82,11 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
-    theme: {
+    backgroundColor: {
       type: String,
       required: false,
     },
-    color: {
+    fontColor: {
       type: String,
       required: false,
     },
@@ -82,7 +102,7 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
-    companyName: {
+    storeName: {
       type: String,
       required: false,
       trim: true,
