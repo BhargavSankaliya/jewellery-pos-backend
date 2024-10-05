@@ -8,11 +8,14 @@ const adsRoute = require("./routes/adsRoute");
 const machineRoute = require("./routes/machineRoute");
 const storeRoute = require("./routes/storeRoute");
 const productRoute = require("./routes/productRoute");
+const machineAuthRoute = require("./routes/machineAuthRoute");
+const machineMobileRoute = require("./routes/machineMobileRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const path = require("path");
 const { errorHandler } = require("./middlewares/error");
 const verifyToken = require("./middlewares/verifyToken");
+const verifyMachineToken = require("./middlewares/verifyMachineToken");
 const responseInterceptor = require("./middlewares/responseInterceptor");
 const config = require("./environmentVariable.json");
 const multer = require("multer");
@@ -102,8 +105,10 @@ const upload = multer({
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoute);
+app.use("/api/auth-mobile", machineAuthRoute);
 app.use("/api/ads", verifyToken, adsRoute);
 app.use("/api/machine", verifyToken, machineRoute);
+app.use("/api/machine-mobile", verifyMachineToken, machineMobileRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product", verifyToken, productRoute);

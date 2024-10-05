@@ -56,6 +56,10 @@ const machineSchema = new mongoose.Schema(
       unique: true,
       required: false,
     },
+    jwtToken: {
+      type: String,
+      required: false,
+    },
     status: {
       type: String,
       enum: ["Active", "Inactive"],
