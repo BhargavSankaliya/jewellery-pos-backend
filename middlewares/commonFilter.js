@@ -57,6 +57,130 @@ commonFilter.productCategoryObject = {
     status: 1
 }
 
+commonFilter.calculateProductPrice = (storeId) => {
+    return [
+        {
+            $lookup: {
+                from: "stores",
+                let: {
+                    storeId: convertIdToObjectId(storeId)
+                },
+                as: "storeDetails",
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$storeId"]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$storeDetails",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $addFields: {
+                devidation: "$storeDetails.devidation",
+                storePrice: "$storeDetails.storePrice",
+                storeDiscount: "$storeDetails.storeDiscount"
+            }
+        },
+        {
+            $addFields: {
+                productPrice: {
+                    $cond: {
+                        if: {
+                            $gt: ["$devidation", 0]
+                        },
+                        then: {
+                            $divide: ["$mrp", "$devidation"]
+                        },
+                        else: "$mrp"
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                storeProductPrice: {
+                    $cond: {
+                        if: {
+                            $and: [
+                                {
+                                    $gt: ["$devidation", 0]
+                                },
+                                {
+                                    $gt: ["$storePrice", 0]
+                                }
+                            ]
+                        },
+                        // Ensure devidation and storePrice > 0
+                        then: {
+                            $add: [
+                                {
+                                    $multiply: [
+                                        {
+                                            $divide: [
+                                                "$mrp",
+                                                "$devidation"
+                                            ]
+                                        },
+                                        "$storePrice"
+                                    ]
+                                },
+                                "$productPrice"
+                            ]
+                        },
+                        else: {
+                            $divide: ["$mrp", "$devidation"]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                actualPrice: {
+                    $cond: {
+                        if: {
+                            $and: [
+                                {
+                                    $gt: ["$storeDiscount", 0]
+                                },
+                                {
+                                    $gt: ["$storeProductPrice", 0]
+                                }
+                            ]
+                        },
+                        then: {
+                            $subtract: [
+                                "$storeProductPrice",
+                                {
+                                    $multiply: [
+                                        "$storeProductPrice",
+                                        {
+                                            $divide: [
+                                                "$storeDiscount",
+                                                100
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        else: "$storeProductPrice"
+                    }
+                }
+            }
+        }
+    ]
+}
+
 commonFilter.productObject = {
     id: "$_id",
     productUniqueNumber: 1,

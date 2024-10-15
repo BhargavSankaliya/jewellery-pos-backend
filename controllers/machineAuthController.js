@@ -261,7 +261,10 @@ machineAuthController.activeProducts = async (req, res, next) => {
             });
         }
 
+        const calculateProductPrice = await commonFilter.calculateProductPrice(req.machine.storeId)
+
         let categoryPipeline = [
+            ...calculateProductPrice,
             {
                 $match: condition
             },
@@ -285,7 +288,7 @@ machineAuthController.activeProducts = async (req, res, next) => {
                 }
             },
             {
-                $project: commonFilter.productObject
+                $project: { ...commonFilter.productObject, storePrice: 1, devidation: 1, storeDiscount: 1, }
             }
         ]
 

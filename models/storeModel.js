@@ -50,6 +50,21 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    devidation: {
+      type: Number,
+      default: 0,
+      required: [true, 'Devidation is required'],
+    },
+    storePrice: {
+      type: Number,
+      default: 0,
+      required: [true, 'Store Price is required'],
+    },
+    storeDiscount: {
+      type: Number,
+      default: 0,
+      required: [true, 'Store Discount is required'],
+    },
     pinCode: {
       type: String,
       required: [true, 'PINCODE is required.'],

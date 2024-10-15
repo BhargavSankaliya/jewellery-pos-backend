@@ -41,15 +41,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'MRP is required'],
     },
-    actualPrice: {
-      type: Number,
-      required: [true, 'Actual Price is required'],
-    },
-    devidation: {
-      type: Number,
-      default: 0,
-      required: [true, 'Devidation is required'],
-    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "productCategoryModel",
