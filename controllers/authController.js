@@ -96,7 +96,7 @@ const FileUpload = async (req, res, next) => {
 // resend otp api
 authController.ResendOtpController = async (req, res, next) => {
   try {
-    const { storeId } = req.query;
+    const { storeId } = req.body;
 
     const otpCode = Math.floor(100000 + Math.random() * 900000);
 
@@ -107,7 +107,7 @@ authController.ResendOtpController = async (req, res, next) => {
 
     await StoreModel.findOneAndUpdate({ _id: storeId }, updateObject);
 
-    const store = await StoreModel.findOne({ _id: storeId });
+    const store = await StoreModel.findById(storeId);
 
     await sendOTPEmail(store.email, otpCode, req, res);
 
@@ -162,6 +162,7 @@ authController.LoginUserController = async (req, res, next) => {
 
     let responseObject = {
       name: store.name,
+      id: store._id,
       address: store.address,
       logo: store.logo,
       description: store.description,
@@ -206,7 +207,7 @@ authController.forgotPassword = async (req, res, next) => {
     await Store.save();
 
     // const resetUrl = `${config.URL}/reset-password?token=${resetToken}`;
-    // await sendOTPEmail(email, resetToken, req, res);
+    await sendOTPEmail(email, resetToken, req, res);
 
     return createResponse({ storeId: Store._id.toString() }, 200, "Please verify your OTP for update password!", res);
 

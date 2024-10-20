@@ -12,6 +12,7 @@ const machineAuthRoute = require("./routes/machineAuthRoute");
 const machineMobileRoute = require("./routes/machineMobileRoute");
 const productCategoryRoute = require("./routes/productCategory");
 const fileUploadRoute = require("./routes/fileUploadRoute");
+const orderRoute = require("./routes/orderRoute");
 const path = require("path");
 const { errorHandler } = require("./middlewares/error");
 const verifyToken = require("./middlewares/verifyToken");
@@ -112,6 +113,7 @@ app.use("/api/machine-mobile", verifyMachineToken, machineMobileRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product", verifyToken, productRoute);
+app.use("/api/order", verifyToken, orderRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
 
 app.use((err, req, res, next) => {

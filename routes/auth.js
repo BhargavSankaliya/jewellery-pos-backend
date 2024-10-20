@@ -4,7 +4,7 @@ const router = express.Router()
 const verifyToken = require('../middlewares/verifyToken');
 
 // RESEND OTP
-router.get("/resend-otp", authController.ResendOtpController)
+router.post("/resend-otp", authController.ResendOtpController)
 
 //LOGIN
 router.post("/login", authController.LoginUserController)
