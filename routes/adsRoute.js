@@ -16,7 +16,7 @@ router.get("/list", adsController.list);
 router.get("/getById", adsController.getByAdsId);
 
 // ads delete
-router.delete("", adsController.adsDelete);
+router.delete("/delete", adsController.adsDelete);
 
 // ads status update _id query
 router.get("/update-status", adsController.updateAdsStatus);

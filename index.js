@@ -11,6 +11,7 @@ const productRoute = require("./routes/productRoute");
 const machineAuthRoute = require("./routes/machineAuthRoute");
 const machineMobileRoute = require("./routes/machineMobileRoute");
 const productCategoryRoute = require("./routes/productCategory");
+const couponRoute = require("./routes/couponRoute");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const orderRoute = require("./routes/orderRoute");
 const path = require("path");
@@ -114,6 +115,7 @@ app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product", verifyToken, productRoute);
 app.use("/api/order", verifyToken, orderRoute);
+app.use("/api/coupons", verifyToken, couponRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
 
 app.use((err, req, res, next) => {
