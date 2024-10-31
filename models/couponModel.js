@@ -9,6 +9,16 @@ const couponSchema = new mongoose.Schema(
       ref: "storeModel",
       required: [false, 'Store is required.'],
     },
+    couponId: {
+      type: String,
+      unique: true,
+      required: false
+    },
+    userEmail: {
+      type: String,
+      required: false,
+      default: ""
+    },
     name: {
       type: String,
       required: [true, 'Name is Required.'],
@@ -26,14 +36,19 @@ const couponSchema = new mongoose.Schema(
       required: [true, 'Min Order Required.'],
       default: 0
     },
-    startDate: {
+    minPriceSpend: {
       type: Number,
+      required: [true, 'Min Price Spend Required.'],
+      default: 0
+    },
+    startDate: {
+      type: Date,
       required: [true, 'Start Date is Required.'],
     },
     endDate: {
-      type: Number,
+      type: Date,
       required: [true, 'End Date is Required.'],
-    },  
+    },
     usageCount: {
       type: Number,
       required: true,
@@ -55,6 +70,32 @@ const couponSchema = new mongoose.Schema(
 );
 
 couponSchema.add(commonSchema);
+
+// Helper function to generate an 8-character alphanumeric coupon ID
+function generateCouponId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let couponId = '';
+  for (let i = 0; i < 8; i++) {
+    couponId += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return couponId;
+}
+
+// Pre-save hook to set a unique couponId
+couponSchema.pre('save', async function (next) {
+  if (!this.couponId) {
+    let isUnique = false;
+    while (!isUnique) {
+      const newCouponId = generateCouponId();
+      const existingCoupon = await CouponModel.findOne({ couponId: newCouponId });
+      if (!existingCoupon) {
+        this.couponId = newCouponId;
+        isUnique = true;
+      }
+    }
+  }
+  next();
+});
 
 const CouponModel = mongoose.model("coupon", couponSchema);
 

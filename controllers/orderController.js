@@ -23,6 +23,11 @@ orderController.list = async (req, res, next) => {
 
     let aggragationQuery = [
       {
+        $sort: {
+          createdAt: -1
+        }
+      },
+      {
         $lookup: {
           from: "machines",
           localField: "machineId",
@@ -61,6 +66,11 @@ orderController.list = async (req, res, next) => {
       {
         $match: condition
       },
+      {
+        $sort: {
+          createdAt: -1
+        }
+      }
     ]
 
     let orderList = await OrderModel.aggregate(aggragationQuery);

@@ -57,6 +57,24 @@ commonFilter.productCategoryObject = {
     status: 1
 }
 
+commonFilter.couponObject = {
+    _id: 1,
+    id: "$_id",
+    storeId: 1,
+    couponId: 1,
+    userEmail: 1,
+    storeDetails: 1,
+    name: 1,
+    description: 1,
+    discount: 1,
+    minOrderRequired: 1,
+    startDate: 1,
+    endDate: 1,
+    usageCount: 1,
+    remainingCount: 1,
+    status: 1,
+}
+
 commonFilter.calculateProductPrice = (storeId) => {
     return [
         {
