@@ -15,13 +15,13 @@ productCategoryController.createupdate = async (req, res, next) => {
     }
 
     if (req.query && !!req.query._id) {
-      let category = await ProductCategory.findOneAndUpdate({ _id: convertIdToObjectId(req.query._id) }, { name: name, image: image ? image : '' }, { upsert: true })
+      let category = await ProductCategory.findOneAndUpdate({ _id: convertIdToObjectId(req.query._id) }, { name: name, image: image ? image : '', order: req.body.order }, { upsert: true })
       createResponse({ category }, 200, "Category Updated Successfully.", res);
       return
     }
 
     let category = await ProductCategory.create({
-      name, image: image ? image : ""
+      name, image: image ? image : "", order: req.body.order
     });
 
     createResponse({ ...category }, 200, "Category Created Successfully.", res);
@@ -55,7 +55,13 @@ productCategoryController.list = async (req, res, next) => {
           _id: 1,
           name: 1,
           status: 1,
-          image: 1
+          image: 1,
+          order: 1
+        }
+      },
+      {
+        $sort: {
+          order: 1
         }
       }
     ]

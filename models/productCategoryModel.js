@@ -9,6 +9,10 @@ const productCategorySchema = new mongoose.Schema(
       required: [true, "Name is required."],
       trim: true,
     },
+    order: {
+      type: Number,
+      required: [true, "Order is required."],
+    },
     image: {
       type: String,
       required: false,

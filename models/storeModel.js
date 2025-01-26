@@ -221,6 +221,10 @@ const storeSchema = new mongoose.Schema(
       default: '',
       required: false
     },
+    files: {
+      type: Array,
+      required: false,
+    },
   },
   { timestamps: true }
 );

@@ -25,6 +25,8 @@ commonFilter.storeCommonObject = {
     companyName: 1,
     theme: 1,
     color: 1,
+    fontColor: 1,
+    backgroundColor: 1,
     companyWebsite: 1,
     locations: 1,
     status: 1,
@@ -54,6 +56,7 @@ commonFilter.productCategoryObject = {
     id: "$_id",
     name: 1,
     image: 1,
+    order: 1,
     status: 1
 }
 
@@ -212,6 +215,10 @@ commonFilter.productObject = {
     productCategoryDetails: 1,
     subCategory: 1,
     gender: 1,
+    goldType: 1,
+    diamondType: 1,
+    productDisplay: 1,
+    mostSelling: 1,
     stocks: 1,
     grossWeight: 1,
     grossWeightName: 1,

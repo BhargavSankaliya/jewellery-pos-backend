@@ -201,6 +201,11 @@ machineAuthController.activeCategories = async (req, res, next) => {
             },
             {
                 $project: commonFilter.productCategoryObject
+            },
+            {
+                $sort: {
+                    order: 1
+                }
             }
         ]
 

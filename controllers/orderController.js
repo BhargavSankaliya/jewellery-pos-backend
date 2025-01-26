@@ -3,6 +3,8 @@ const createResponse = require("../middlewares/response.js");
 const { commonFilter } = require("../middlewares/commonFilter.js");
 const OrderModel = require("../models/orderModel.js");
 const { convertIdToObjectId } = require("./authController.js");
+const StoreModel = require("../models/storeModel.js");
+const { MachineModel } = require("../models/machineModel.js");
 const orderController = {};
 
 orderController.list = async (req, res, next) => {
@@ -302,6 +304,209 @@ orderController.orderDetails = async (req, res, next) => {
     }
 
     createResponse(null, 400, "No category found.", res);
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+orderController.dashboardCount = async (req, res, next) => {
+  try {
+
+    let orderQuery = [
+      {
+        $count: "string"
+      }
+    ]
+
+    let orderList = await OrderModel.aggregate(orderQuery)
+
+    let storeList = await StoreModel.aggregate([
+      {
+        $count: "string"
+      }
+    ])
+
+    let machineList = await MachineModel.aggregate([
+      {
+        $count: "string"
+      }
+    ])
+
+    let paymentMadeData = await OrderModel.aggregate([
+      {
+        $group: {
+          _id: "null",
+          payment: {
+            $sum: "$paymentMade"
+          }
+        }
+      }
+    ])
+
+    let count = {
+      totalOrder: orderList[0].string,
+      totalStore: storeList[0].string,
+      totalMachine: machineList[0].string,
+      totalPayment: paymentMadeData[0].payment,
+    }
+
+    createResponse(count, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+orderController.orderChartData = async (req, res, next) => {
+  try {
+
+    function getLast7Days() {
+      const today = new Date();
+      const dates = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i); // Subtract days
+        const formattedDate = date.toLocaleDateString('en-GB'); // Format: DD-MM-YYYY
+        dates.push(formattedDate); // Push as DD-MM-YYYY
+      }
+      return dates;
+    }
+
+    const last7Days = getLast7Days();
+
+    let query = [
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%d/%m/%Y", // Format dates as DD-MM-YYYY
+              date: "$createdAt"
+            }
+          },
+          count: {
+            $sum: 1
+          },
+          paymentMade: {
+            $sum: "$paymentMade"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          count: 1,
+          paymentMade: 1,
+        }
+      }
+    ];
+
+    let result = await OrderModel.aggregate(query);
+
+    const resultMap = result.reduce((acc, curr) => {
+      acc[curr.date] = curr.count;
+      return acc;
+    }, {});
+    const resultMapForPayment = result.reduce((acc, curr) => {
+      acc[curr.date] = curr.paymentMade;
+      return acc;
+    }, {});
+
+    // Merge the last 7 days with the results, defaulting missing dates to 0
+    const finalResult = last7Days.map(date => ({
+      date, // Already in DD-MM-YYYY format
+      count: resultMap[date] || 0,
+      paymentMade: resultMapForPayment[date] || 0
+    }));
+
+    createResponse(finalResult, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* Category base order data */
+orderController.orderChartCategoryBaseData = async (req, res, next) => {
+  try {
+
+    function getLast7Days() {
+      const today = new Date();
+      const dates = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i); // Subtract days
+        const formattedDate = date.toLocaleDateString('en-GB'); // Format: DD-MM-YYYY
+        dates.push(formattedDate); // Push as DD-MM-YYYY
+      }
+      return dates;
+    }
+
+    const last7Days = getLast7Days();
+
+    let query = [
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%d/%m/%Y", // Format dates as DD-MM-YYYY
+              date: "$createdAt"
+            }
+          },
+          count: {
+            $sum: 1
+          },
+          paymentMade: {
+            $sum: "$paymentMade"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          count: 1,
+          paymentMade: 1,
+        }
+      }
+    ];
+
+    let result = await OrderModel.aggregate(query);
+
+    const resultMap = result.reduce((acc, curr) => {
+      acc[curr.date] = curr.count;
+      return acc;
+    }, {});
+    const resultMapForPayment = result.reduce((acc, curr) => {
+      acc[curr.date] = curr.paymentMade;
+      return acc;
+    }, {});
+
+    // Merge the last 7 days with the results, defaulting missing dates to 0
+    const finalResult = last7Days.map(date => ({
+      date, // Already in DD-MM-YYYY format
+      count: resultMap[date] || 0,
+      paymentMade: resultMapForPayment[date] || 0
+    }));
+
+    createResponse(finalResult, 200, "count get successfully", res);
+
   } catch (error) {
     errorHandler(error, req, res)
   }

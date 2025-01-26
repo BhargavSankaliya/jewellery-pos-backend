@@ -55,6 +55,26 @@ const productSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
       required: [true, 'Gender is required'],
     }],
+    goldType: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    diamondType: {
+      type: String,
+      default: '',
+      required: [true, 'diamond type is required'],
+    },
+    productDisplay: {
+      type: String,
+      default: '',
+      required: [true, 'Product display is required'],
+    },
+    mostSelling: {
+      type: String,
+      default: '',
+      required: false,
+    },
     stocks: {
       type: Number,
       default: 0,
