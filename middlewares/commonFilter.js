@@ -57,7 +57,8 @@ commonFilter.productCategoryObject = {
     name: 1,
     image: 1,
     order: 1,
-    status: 1
+    status: 1,
+    parentCategory: 1,
 }
 
 commonFilter.couponObject = {
@@ -202,6 +203,267 @@ commonFilter.calculateProductPrice = (storeId) => {
     ]
 }
 
+commonFilter.calculateProductDiamondTypePrice = (storeId) => {
+    return [
+        {
+            $lookup: {
+                from: "stores",
+                let: {
+                    storeId: convertIdToObjectId(storeId)
+                },
+                as: "storeDetails",
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$storeId"]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$storeDetails",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $addFields: {
+                devidation: "$storeDetails.devidation",
+                storePrice: "$storeDetails.storePrice",
+                storeDiscount: "$storeDetails.storeDiscount"
+            }
+        },
+        {
+            $addFields: {
+                items: {
+                    $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                            $mergeObjects: [
+                                "$$item",
+                                {
+                                    productNaturalPrice: {
+                                        $cond: {
+                                            if: {
+                                                $gt: ["$devidation", 0]
+                                            },
+                                            then: {
+                                                $divide: [
+                                                    "$$item.diamondTypeNaturalMRP",
+                                                    "$devidation"
+                                                ]
+                                            },
+                                            else: "$$item.diamondTypeNaturalMRP"
+                                        }
+                                    },
+                                    productLabGrownPrice: {
+                                        $cond: {
+                                            if: {
+                                                $gt: ["$devidation", 0]
+                                            },
+                                            then: {
+                                                $divide: [
+                                                    "$$item.diamondTypeLabGrownMRP",
+                                                    "$devidation"
+                                                ]
+                                            },
+                                            else: "$$item.diamondTypeLabGrownMRP"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                items: {
+                    $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                            $mergeObjects: [
+                                "$$item",
+                                {
+                                    storeProductNaturalPrice: {
+                                        $cond: {
+                                            if: {
+                                                $and: [
+                                                    {
+                                                        $gt: ["$devidation", 0]
+                                                    },
+                                                    {
+                                                        $gt: ["$storePrice", 0]
+                                                    }
+                                                ]
+                                            },
+                                            then: {
+                                                $add: [
+                                                    {
+                                                        $multiply: [
+                                                            {
+                                                                $divide: [
+                                                                    "$$item.diamondTypeNaturalMRP",
+                                                                    "$devidation"
+                                                                ]
+                                                            },
+                                                            "$storePrice"
+                                                        ]
+                                                    },
+                                                    "$$item.productNaturalPrice"
+                                                ]
+                                            },
+                                            else: {
+                                                $divide: [
+                                                    "$$item.diamondTypeNaturalMRP",
+                                                    "$devidation"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    storeProductLabGrownPrice: {
+                                        $cond: {
+                                            if: {
+                                                $and: [
+                                                    {
+                                                        $gt: ["$devidation", 0]
+                                                    },
+                                                    {
+                                                        $gt: ["$storePrice", 0]
+                                                    }
+                                                ]
+                                            },
+                                            then: {
+                                                $add: [
+                                                    {
+                                                        $multiply: [
+                                                            {
+                                                                $divide: [
+                                                                    "$$item.diamondTypeLabGrownMRP",
+                                                                    "$devidation"
+                                                                ]
+                                                            },
+                                                            "$storePrice"
+                                                        ]
+                                                    },
+                                                    "$$item.productLabGrownPrice"
+                                                ]
+                                            },
+                                            else: {
+                                                $divide: [
+                                                    "$$item.diamondTypeLabGrownMRP",
+                                                    "$devidation"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $addFields: {
+                items: {
+                    $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                            $mergeObjects: [
+                                "$$item",
+                                {
+                                    actualNaturalPrice: {
+                                        $cond: {
+                                            if: {
+                                                $and: [
+                                                    {
+                                                        $gt: [
+                                                            "$storeDiscount",
+                                                            0
+                                                        ]
+                                                    },
+                                                    {
+                                                        $gt: [
+                                                            "$$item.storeProductNaturalPrice",
+                                                            0
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            then: {
+                                                $subtract: [
+                                                    "$$item.storeProductNaturalPrice",
+                                                    {
+                                                        $multiply: [
+                                                            "$$item.storeProductNaturalPrice",
+                                                            {
+                                                                $divide: [
+                                                                    "$storeDiscount",
+                                                                    100
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            else: "$$item.storeProductNaturalPrice"
+                                        }
+                                    },
+                                    actualLabGrownPrice: {
+                                        $cond: {
+                                            if: {
+                                                $and: [
+                                                    {
+                                                        $gt: [
+                                                            "$storeDiscount",
+                                                            0
+                                                        ]
+                                                    },
+                                                    {
+                                                        $gt: [
+                                                            "$$item.storeProductLabGrownPrice",
+                                                            0
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            then: {
+                                                $subtract: [
+                                                    "$$item.storeProductLabGrownPrice",
+                                                    {
+                                                        $multiply: [
+                                                            "$$item.storeProductLabGrownPrice",
+                                                            {
+                                                                $divide: [
+                                                                    "$storeDiscount",
+                                                                    100
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            else: "$$item.storeProductLabGrownPrice"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+
 commonFilter.productObject = {
     id: "$_id",
     productUniqueNumber: 1,
@@ -234,7 +496,7 @@ commonFilter.productObject = {
     colorStPcs: 1,
     mainStonePcs: 1,
     status: 1,
-
+    items: 1,
 }
 
 commonFilter.paginationCalculation = async (list, limit, page) => {

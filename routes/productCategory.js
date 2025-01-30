@@ -13,6 +13,12 @@ router.post("/create-update", validateSchema(ProductCategory), productCategoryCo
 router.get("/list", productCategoryController.list);
 
 // category list and active list if query isActive:true then
+router.get("/parentCategory", productCategoryController.parentCategory);
+
+// category list and active list if query isActive:true then
+router.get("/sub-Category", productCategoryController.subCategory);
+
+// category list and active list if query isActive:true then
 router.get("/getById", productCategoryController.getByCategoryId);
 
 // category status update _id query

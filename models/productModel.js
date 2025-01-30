@@ -19,6 +19,49 @@ async function getNextmachineName() {
   return `PRODUCT${padWithZeros(counter.sequence_product_value, 8)}`;
 }
 
+const itemSchema = new mongoose.Schema(
+  {
+    diamondShape: {
+      type: String,
+      required: [true, 'Diamond Shape is required.'],
+    },
+    diamondShapeImage: {
+      type: Array,
+      required: [true, 'Diamond Shape Image is required.'],
+    },
+    goldType: {
+      type: String,
+      required: [true, 'Gold Type is required.'],
+    },
+    bandWidth: {
+      type: String,
+      required: false,
+    },
+    stocks: {
+      type: Number,
+      min: 1,
+      required: [true, 'Stocks is required.'],
+    },
+    goldTypeColor: {
+      type: String,
+      required: [true, 'Gold Type Color is required.'],
+    },
+    diamondTypeNaturalMRP: {
+      type: Number,
+      required: [true, 'Diamond Type Natural is required.'],
+    },
+    diamondTypeLabGrownMRP: {
+      type: Number,
+      required: [true, 'Diamond Type Lab Grown is required.'],
+    },
+    files: {
+      type: Array,
+      required: false,
+    },
+  },
+  { timestamps: true }
+);
+
 const productSchema = new mongoose.Schema(
   {
     productUniqueNumber: {
@@ -37,17 +80,17 @@ const productSchema = new mongoose.Schema(
       type: Array,
       required: false,
     },
-    mrp: {
-      type: Number,
-      required: [true, 'MRP is required'],
-    },
+    // mrp: {
+    //   type: Number,
+    //   required: [true, 'MRP is required'],
+    // },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "productCategoryModel",
       required: [true, 'Category is required'],
     },
     subCategory: {
-      type: Array,
+      type: [mongoose.Schema.Types.ObjectId],
       required: false,
     },
     gender: [{
@@ -55,30 +98,15 @@ const productSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
       required: [true, 'Gender is required'],
     }],
-    goldType: {
-      type: String,
-      default: '',
-      required: false,
-    },
-    diamondType: {
-      type: String,
-      default: '',
-      required: [true, 'diamond type is required'],
-    },
     productDisplay: {
       type: String,
-      default: '',
-      required: [true, 'Product display is required'],
+      default: false,
+      required: [false, 'Product display is required'],
     },
     mostSelling: {
-      type: String,
-      default: '',
+      type: Boolean,
+      default: false,
       required: false,
-    },
-    stocks: {
-      type: Number,
-      default: 0,
-      required: [true, 'Stock is required'],
     },
     grossWeight: {
       type: Number,
@@ -151,6 +179,9 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: "Active"
     },
+
+    items: [itemSchema]
+
   },
   { timestamps: true }
 );

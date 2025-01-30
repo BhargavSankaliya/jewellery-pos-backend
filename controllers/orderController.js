@@ -66,6 +66,82 @@ orderController.list = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails",
+          pipeline: [
+            { $project: commonFilter.productObject }
+          ]
+        },
+      },
+      {
+        $addFields: {
+          productDetails: {
+            $map: {
+              input: "$productDetails",
+              as: "cat",
+              in: {
+                $mergeObjects: [
+                  "$$cat",
+                  {
+                    quantity: {
+                      $arrayElemAt: [
+                        {
+                          $map: {
+                            input: {
+                              $filter: {
+                                input:
+                                  "$products",
+                                as: "detail",
+                                cond: {
+                                  $eq: [
+                                    "$$detail.productId",
+                                    "$$cat._id"
+                                  ]
+                                }
+                              }
+                            },
+                            as: "products",
+                            in: "$$products.quantity"
+                          }
+                        },
+                        0
+                      ]
+                    },
+                    mainProductOrderId: {
+                      $arrayElemAt: [
+                        {
+                          $map: {
+                            input: {
+                              $filter: {
+                                input:
+                                  "$products",
+                                as: "detail",
+                                cond: {
+                                  $eq: [
+                                    "$$detail.productId",
+                                    "$$cat._id"
+                                  ]
+                                }
+                              }
+                            },
+                            as: "products",
+                            in: "$$products._id"
+                          }
+                        },
+                        0
+                      ]
+                    },
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
         $match: condition
       },
       {
@@ -100,8 +176,89 @@ orderController.orderDetails = async (req, res, next) => {
       _id: convertIdToObjectId(req.query.orderId)
     });
 
-
     let aggragationQuery = [
+      {
+        $match: condition
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "products.productDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$products.productDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: "$_id",
+          firstname: {
+            $first: "$firstname"
+          },
+          lastname: {
+            $first: "$lastname"
+          },
+          email: {
+            $first: "$email"
+          },
+          phone: {
+            $first: "$phone"
+          },
+          machineId: {
+            $first: "$machineId"
+          },
+          storeId: {
+            $first: "$storeId"
+          },
+          paymentMade: {
+            $first: "$paymentMade"
+          },
+          paymentStatus: {
+            $first: "$paymentStatus"
+          },
+          paymentMode: {
+            $first: "$paymentMode"
+          },
+          cardReferenceNumber: {
+            $first: "$cardReferenceNumber"
+          },
+          status: {
+            $first: "$status"
+          },
+          isCancel: {
+            $first: "$isCancel"
+          },
+          isDeleted: {
+            $first: "$isDeleted"
+          },
+          createdAt: {
+            $first: "$createdAt"
+          },
+          updatedAt: {
+            $first: "$updatedAt"
+          },
+          deletedAt: {
+            $first: "$deletedAt"
+          },
+          orderNumber: {
+            $first: "$orderNumber"
+          },
+          products: {
+            $push: "$products"
+          }
+        }
+      },
       {
         $lookup: {
           from: "machines",
@@ -137,163 +294,6 @@ orderController.orderDetails = async (req, res, next) => {
           path: "$machineDetails",
           preserveNullAndEmptyArrays: true,
         },
-      },
-      {
-        $lookup: {
-          from: "products",
-          localField: "products.productId",
-          foreignField: "_id",
-          let: {
-            storeId: "$machineDetails.storeId"
-          },
-          as: "productDetails",
-          pipeline: [
-            {
-              $lookup: {
-                from: "stores",
-                let: {
-                  storeId: "$$storeId"
-                },
-                as: "storeDetails",
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $eq: ["$_id", "$$storeId"]
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              $unwind: {
-                path: "$storeDetails",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $addFields: {
-                devidation: "$storeDetails.devidation",
-                storePrice: "$storeDetails.storePrice",
-                storeDiscount: "$storeDetails.storeDiscount"
-              }
-            },
-            {
-              $addFields: {
-                productPrice: {
-                  $cond: {
-                    if: {
-                      $gt: ["$devidation", 0]
-                    },
-                    then: {
-                      $divide: ["$mrp", "$devidation"]
-                    },
-                    else: "$mrp"
-                  }
-                }
-              }
-            },
-            {
-              $addFields: {
-                storeProductPrice: {
-                  $cond: {
-                    if: {
-                      $and: [
-                        {
-                          $gt: ["$devidation", 0]
-                        },
-                        {
-                          $gt: ["$storePrice", 0]
-                        }
-                      ]
-                    },
-                    // Ensure devidation and storePrice > 0
-                    then: {
-                      $add: [
-                        {
-                          $multiply: [
-                            {
-                              $divide: [
-                                "$mrp",
-                                "$devidation"
-                              ]
-                            },
-                            "$storePrice"
-                          ]
-                        },
-                        "$productPrice"
-                      ]
-                    },
-                    else: {
-                      $divide: ["$mrp", "$devidation"]
-                    }
-                  }
-                }
-              }
-            },
-            {
-              $addFields: {
-                actualPrice: {
-                  $cond: {
-                    if: {
-                      $and: [
-                        {
-                          $gt: ["$storeDiscount", 0]
-                        },
-                        {
-                          $gt: ["$storeProductPrice", 0]
-                        }
-                      ]
-                    },
-                    then: {
-                      $subtract: [
-                        "$storeProductPrice",
-                        {
-                          $multiply: [
-                            "$storeProductPrice",
-                            {
-                              $divide: [
-                                "$storeDiscount",
-                                100
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    else: "$storeProductPrice"
-                  }
-                }
-              }
-            },
-            {
-              $lookup: {
-                from: "productcategories",
-                localField: "category",
-                foreignField: "_id",
-                as: "productCategoryDetails",
-                pipeline: [
-                  {
-                    $project: commonFilter.productCategoryObject
-                  }
-                ]
-              }
-            },
-            {
-              $unwind: {
-                path: "$productCategoryDetails",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $project: { ...commonFilter.productObject, storePrice: 1, devidation: 1, storeDiscount: 1, }
-            }
-          ]
-        }
-      },
-      {
-        $match: condition
       },
     ]
 
@@ -348,6 +348,47 @@ orderController.dashboardCount = async (req, res, next) => {
       totalStore: storeList[0].string,
       totalMachine: machineList[0].string,
       totalPayment: paymentMadeData[0].payment,
+    }
+
+    createResponse(count, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+orderController.dashboardCountForStore = async (req, res, next) => {
+  try {
+
+    let orderQuery = [
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.query.storeId ? req.query.storeId : req.store._id.toString())
+        }
+      },
+    ]
+
+    let orderList = await OrderModel.aggregate(orderQuery)
+
+    let paymentMadeData = await OrderModel.aggregate([
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.query.storeId ? req.query.storeId : req.store._id.toString())
+        }
+      },
+      {
+        $group: {
+          _id: "null",
+          payment: {
+            $sum: "$paymentMade"
+          }
+        }
+      }
+    ])
+
+    let count = {
+      totalOrder: orderList.length,
+      totalPayment: paymentMadeData.length > 0 ? paymentMadeData[0].payment : 0,
     }
 
     createResponse(count, 200, "count get successfully", res);
@@ -434,8 +475,7 @@ orderController.orderChartData = async (req, res, next) => {
   }
 }
 
-/* Category base order data */
-orderController.orderChartCategoryBaseData = async (req, res, next) => {
+orderController.orderChartDataForStore = async (req, res, next) => {
   try {
 
     function getLast7Days() {
@@ -452,7 +492,14 @@ orderController.orderChartCategoryBaseData = async (req, res, next) => {
 
     const last7Days = getLast7Days();
 
+
     let query = [
+
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+        }
+      },
       {
         $match: {
           createdAt: {
@@ -506,6 +553,309 @@ orderController.orderChartCategoryBaseData = async (req, res, next) => {
     }));
 
     createResponse(finalResult, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* Category base order data */
+orderController.orderChartCategoryBaseData = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$productDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: "$productDetails.category",
+          count: {
+            $sum: 1
+          },
+          paymentMade: {
+            $sum: "$paymentMade"
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+          paymentMade: 1,
+          categoryName: {
+            $arrayElemAt: ["$categoryDetails.name", 0]
+          }
+        }
+      }
+    ]
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* gold type base order data */
+orderController.goldTypeChartData = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$productDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              "$products.goldType",
+              "10"
+            ]
+          },
+          count: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          goldType: "$_id",
+          count: 1
+        }
+      }
+    ]
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+
+/* Category base order data for Store */
+orderController.orderChartCategoryBaseDataForStore = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+        }
+      },
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$productDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: "$productDetails.category",
+          count: {
+            $sum: 1
+          },
+          paymentMade: {
+            $sum: "$paymentMade"
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+          paymentMade: 1,
+          categoryName: {
+            $arrayElemAt: ["$categoryDetails.name", 0]
+          }
+        }
+      }
+    ]
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* gold type base order data for Store */
+orderController.goldTypeChartDataForStore = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+        }
+      },
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$productDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              "$productDetails.goldType",
+              "10"
+            ]
+          },
+          count: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          goldType: "$_id",
+          count: 1
+        }
+      }
+    ]
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* update order status */
+orderController.deleteOrder = async (req, res, next) => {
+  try {
+
+    let orderDetails = await OrderModel.findOne({ _id: convertIdToObjectId(req.query._id) });
+
+    orderDetails.isCancel = true;
+    orderDetails.save();
+
+    createResponse(null, 200, "order deleted successfully", res);
 
   } catch (error) {
     errorHandler(error, req, res)

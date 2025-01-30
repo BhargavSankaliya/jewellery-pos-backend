@@ -14,13 +14,28 @@ router.get("/current-ads", machineAuthController.currentAds);
 // get category list api
 router.get("/categories", machineAuthController.activeCategories);
 
-// get category list api
+// get sub category list api
+router.get("/sub-categories", machineAuthController.activeSubCategories);
+
+// get product list api
 router.post("/products", machineAuthController.activeProducts);
 
-// get category list api
+// get product details api
 router.get("/products", machineAuthController.getProductDetails);
 
-// get category list api
+// get add to cart api
+router.post("/addToCart", machineAuthController.addToCartInItem);
+
+// get cart details api
+router.get("/cart-details", machineAuthController.orderCartDetails);
+
+// get update count api
+router.post("/cart-quantity-addRemove", machineAuthController.updateQuantityOFOrder);
+
+// remove all items in cart api
+router.get("/cart-remove-allItems", machineAuthController.cartRemoveAllItemFromOrder);
+
+// generate order api
 router.post("/order", validateSchema(OrderModel), machineAuthController.order);
 
 module.exports = router

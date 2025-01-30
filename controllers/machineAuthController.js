@@ -14,6 +14,7 @@ const ProductCategory = require("../models/productCategoryModel.js");
 const { convertIdToObjectId } = require("./authController.js");
 const productModel = require("../models/productModel.js");
 const OrderModel = require("../models/orderModel.js");
+const AddToCartModel = require("../models/addToCartModel.js");
 const machineAuthController = {}
 
 // Login API
@@ -196,7 +197,42 @@ machineAuthController.activeCategories = async (req, res, next) => {
             {
                 $match: {
                     isDeleted: false,
-                    status: 'Active'
+                    status: 'Active',
+                    parentCategory: null
+                }
+            },
+            {
+                $project: commonFilter.productCategoryObject
+            },
+            {
+                $sort: {
+                    order: 1
+                }
+            }
+        ]
+
+        let getAllCategories = await ProductCategory.aggregate(categoryPipeline);
+        if (!getAllCategories || getAllCategories.length == 0) {
+            return createResponse([], 200, "categories fetched successfully", res)
+        }
+        return createResponse(getAllCategories, 200, "categories fetched successfully", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.activeSubCategories = async (req, res, next) => {
+    try {
+
+        let categoryPipeline = [
+            {
+                $match: {
+                    isDeleted: false,
+                    status: 'Active',
+                    parentCategory: {
+                        $ne: null
+                    }
                 }
             },
             {
@@ -272,14 +308,14 @@ machineAuthController.activeProducts = async (req, res, next) => {
         }
         if (req.body.minValue != 'null' && !!req.body.minValue && req.body.maxValue != 'null' && !!req.body.maxValue) {
             condition["$and"].push({
-                actualPrice: {
+                "items.actualNaturalPrice": {
                     $gte: parseFloat(req.body.minValue),
                     $lte: parseFloat(req.body.maxValue)
                 }
             });
         }
 
-        const calculateProductPrice = await commonFilter.calculateProductPrice(req.machine.storeId)
+        const calculateProductPrice = await commonFilter.calculateProductDiamondTypePrice(req.machine.storeId)
 
         let categoryPipeline = [
             ...calculateProductPrice,
@@ -302,6 +338,25 @@ machineAuthController.activeProducts = async (req, res, next) => {
             {
                 $unwind: {
                     path: "$productCategoryDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "productcategories",
+                    localField: "subCategory",
+                    foreignField: "_id",
+                    as: "productSubCategoryList",
+                    pipeline: [
+                        {
+                            $project: commonFilter.productCategoryObject
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind: {
+                    path: "$productSubCategoryList",
                     preserveNullAndEmptyArrays: true
                 }
             },
@@ -364,14 +419,14 @@ machineAuthController.getProductDetails = async (req, res, next) => {
         }
         if (req.body.minValue != 'null' && !!req.body.minValue && req.body.maxValue != 'null' && !!req.body.maxValue) {
             condition["$and"].push({
-                actualPrice: {
+                "items.actualNaturalPrice": {
                     $gte: parseFloat(req.body.minValue),
                     $lte: parseFloat(req.body.maxValue)
                 }
             });
         }
 
-        const calculateProductPrice = await commonFilter.calculateProductPrice(req.machine.storeId)
+        const calculateProductPrice = await commonFilter.calculateProductDiamondTypePrice(req.machine.storeId)
 
         let categoryPipeline = [
             ...calculateProductPrice,
@@ -426,17 +481,132 @@ machineAuthController.order = async (req, res, next) => {
         }
 
         bodyData.machineId = req.machine._id;
+        bodyData.storeId = req.machine.storeId;
 
-        bodyData.products = bodyData.products.map((x) => { return { productId: convertIdToObjectId(x.productId), quantity: parseInt(x.quantity) } });
+        bodyData.products = bodyData.products.map((x) => { return { ...x, productId: convertIdToObjectId(x.productId), itemId: convertIdToObjectId(x.itemId), mrp: parseFloat(x.mrp), quantity: parseInt(x.quantity) } });
+
+        bodyData.products.map(async (x) => {
+            let findProduct = await productModel.findById(x.productId);
+            if (findProduct && findProduct.items && findProduct.items.length > 0) {
+                findProduct.items.map((y) => {
+                    if (y._id.toString() == x.itemId.toString() && y.stocks > 0) {
+                        y.stocks = y.stocks - 1
+                    }
+                })
+            }
+            findProduct.save();
+        })
 
         let orderCreate = await OrderModel.create(bodyData);
-
+        await AddToCartModel.deleteMany({ machineId: convertIdToObjectId(req.machine._id.toString()) });
         return createResponse(orderCreate, 200, "Order Placed Successfully", res)
 
     } catch (error) {
         errorHandler(error, req, res, next)
     }
 }
+
+
+machineAuthController.addToCartInItem = async (req, res, next) => {
+    try {
+
+        let bodyData = req.body;
+
+        bodyData.machineId = req.machine._id;
+
+        bodyData.productId = convertIdToObjectId(req.body.productId);
+        bodyData.itemId = convertIdToObjectId(bodyData.itemId);
+        bodyData.quantity = parseInt(bodyData.quantity);
+
+        bodyData.totalPrice = parseFloat(bodyData.quantity * bodyData.actualPrice);
+
+        let orderCreate = await AddToCartModel.create(bodyData);
+
+        return createResponse(orderCreate, 200, "Item added in cart Successfully", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.updateQuantityOFOrder = async (req, res, next) => {
+    try {
+
+        let bodyData = req.body;
+
+        let findProduct = await AddToCartModel.findOne({ _id: convertIdToObjectId(bodyData._id) });
+
+        if (!!findProduct && bodyData.type == 1) {
+            if (findProduct.quantity == 1) {
+                await AddToCartModel.deleteOne({ _id: findProduct._id })
+            }
+            else {
+                findProduct.quantity = findProduct.quantity - 1;
+                findProduct.totalPrice = (findProduct.actualPrice * findProduct.quantity).toFixed(2);
+                await findProduct.save();
+            }
+        }
+        else if (!!findProduct && bodyData.type == 2) {
+            findProduct.quantity = findProduct.quantity + 1;
+            findProduct.totalPrice = (findProduct.actualPrice * findProduct.quantity).toFixed(2);
+            await findProduct.save();
+        }
+
+        return createResponse(findProduct, 200, "In cart update quantity Successfully", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.cartRemoveAllItemFromOrder = async (req, res, next) => {
+    try {
+
+        let bodyData = req.body;
+
+        let findProduct = await AddToCartModel.deleteMany({ machineId: convertIdToObjectId(req.machine._id.toString()) });
+
+        return createResponse(null, 200, "Remove All items in cart", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.orderCartDetails = async (req, res, next) => {
+    try {
+
+        let findProduct = await AddToCartModel.aggregate(
+            [
+                {
+                    $match: {
+                        machineId: convertIdToObjectId(req.machine._id.toString())
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "products",
+                        localField: "productId",
+                        foreignField: "_id",
+                        as: "productDetails"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$productDetails",
+                        preserveNullAndEmptyArrays: true
+                    }
+                }
+            ]
+        );
+
+        return createResponse(findProduct, 200, "All items Fetched successfully", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
 
 module.exports = {
     machineAuthController

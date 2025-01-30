@@ -13,6 +13,11 @@ const productCategorySchema = new mongoose.Schema(
       type: Number,
       required: [true, "Order is required."],
     },
+    parentCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+      required: false,
+    },
     image: {
       type: String,
       required: false,
