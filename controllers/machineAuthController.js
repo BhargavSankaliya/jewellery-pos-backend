@@ -473,12 +473,6 @@ machineAuthController.order = async (req, res, next) => {
 
         let bodyData = req.body;
 
-        if (bodyData.paymentMade > 0) {
-            bodyData.paymentStatus = "Paid"
-        }
-        else {
-            bodyData.paymentStatus = "Not Paid"
-        }
 
         bodyData.machineId = req.machine._id;
         bodyData.storeId = req.machine.storeId;
@@ -496,6 +490,20 @@ machineAuthController.order = async (req, res, next) => {
             }
             findProduct.save();
         })
+
+        bodyData.paymentMade = 0;
+
+        bodyData.products.map((x) => {
+            bodyData.paymentMade = bodyData.paymentMade + parseFloat(x.totalPrice);
+        })
+
+        if (bodyData.paymentMade > 0) {
+            bodyData.paymentStatus = "Paid"
+        }
+        else {
+            bodyData.paymentStatus = "Not Paid"
+        }
+
 
         let orderCreate = await OrderModel.create(bodyData);
         await AddToCartModel.deleteMany({ machineId: convertIdToObjectId(req.machine._id.toString()) });
