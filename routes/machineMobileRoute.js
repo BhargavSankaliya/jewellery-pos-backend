@@ -26,6 +26,9 @@ router.get("/products", machineAuthController.getProductDetails);
 // get add to cart api
 router.post("/addToCart", machineAuthController.addToCartInItem);
 
+// get add to cart api
+router.get("/get-cart-number", machineAuthController.getCartOrdderCount);
+
 // get cart details api
 router.get("/cart-details", machineAuthController.orderCartDetails);
 

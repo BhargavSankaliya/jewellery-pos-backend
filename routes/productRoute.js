@@ -12,6 +12,9 @@ router.post("/create-update", validateSchema(productModel), productController.cr
 // ads list and active list if query isActive:true then
 router.get("/list", productController.list);
 
+// ads list and active list if query isActive:true then
+router.get("/list-for-store", productController.listForStore);
+
 // ads details
 router.get("/getById", productController.getByAdsId);
 

@@ -37,10 +37,16 @@ const itemSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+
     stocks: {
       type: Number,
-      min: 1,
-      required: [true, 'Stocks is required.'],
+      min: 0,
+      required: [true, 'Natural Stocks is required.'],
+    },
+    labGrownStock: {
+      type: Number,
+      min: 0,
+      required: [true, 'Lab Grown Stocks is required.'],
     },
     goldTypeColor: {
       type: String,
@@ -55,6 +61,10 @@ const itemSchema = new mongoose.Schema(
       required: [true, 'Diamond Type Lab Grown is required.'],
     },
     files: {
+      type: Array,
+      required: false,
+    },
+    videos: {
       type: Array,
       required: false,
     },

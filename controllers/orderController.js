@@ -314,6 +314,11 @@ orderController.dashboardCount = async (req, res, next) => {
 
     let orderQuery = [
       {
+        $match: {
+          isCancel: false
+        }
+      },
+      {
         $count: "string"
       }
     ]
@@ -363,7 +368,8 @@ orderController.dashboardCountForStore = async (req, res, next) => {
     let orderQuery = [
       {
         $match: {
-          storeId: convertIdToObjectId(req.query.storeId ? req.query.storeId : req.store._id.toString())
+          storeId: convertIdToObjectId(req.query.storeId ? req.query.storeId : req.store._id.toString()),
+          isCancel: false
         }
       },
     ]
@@ -421,7 +427,8 @@ orderController.orderChartData = async (req, res, next) => {
           createdAt: {
             $gte: new Date(req.body.startDate), // Ensure the correct range
             $lt: new Date(req.body.endDate)
-          }
+          },
+          isCancel: false
         }
       },
       {
@@ -497,7 +504,8 @@ orderController.orderChartDataForStore = async (req, res, next) => {
 
       {
         $match: {
-          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString()),
+          isCancel: false
         }
       },
       {
@@ -569,7 +577,8 @@ orderController.orderChartCategoryBaseData = async (req, res, next) => {
           createdAt: {
             $gte: new Date(req.body.startDate), // Ensure the correct range
             $lt: new Date(req.body.endDate)
-          }
+          },
+          isCancel: false
         }
       },
       {
@@ -643,7 +652,8 @@ orderController.goldTypeChartData = async (req, res, next) => {
           createdAt: {
             $gte: new Date(req.body.startDate), // Ensure the correct range
             $lt: new Date(req.body.endDate)
-          }
+          },
+          isCancel: false
         }
       },
       {
@@ -705,7 +715,8 @@ orderController.orderChartCategoryBaseDataForStore = async (req, res, next) => {
     let query = [
       {
         $match: {
-          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString()),
+          isCancel: false
         }
       },
       {
@@ -784,7 +795,8 @@ orderController.goldTypeChartDataForStore = async (req, res, next) => {
     let query = [
       {
         $match: {
-          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString())
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString()),
+          isCancel: false
         }
       },
       {

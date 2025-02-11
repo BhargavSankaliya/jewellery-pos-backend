@@ -30,7 +30,8 @@ commonFilter.storeCommonObject = {
     companyWebsite: 1,
     locations: 1,
     status: 1,
-    role: 1
+    role: 1,
+    files: 1
 }
 
 commonFilter.machineCommonObject = {

@@ -29,25 +29,25 @@ function errorHandler(err, req, res, next) {
 
     // Handle Mongoose validation errors
     if (err.name === 'ValidationError') {
-        code = 400;
+        code = 200;
         message = Object.values(err.errors).map(e => e.message).join(', ');
     }
-    else if(err.name === 'TypeError') {
-        code = 400;
+    else if (err.name === 'TypeError') {
+        code = 200;
         message = err.message
     }
     // Handle custom errors
     else if (err instanceof CustomError) {
-        code = err.statusCode;
+        code = 200;
         message = err.message;
     }
     // Other server errors
     else {
-        code = 500;
+        code = 200;
         message = 'Internal Server Error';
     }
 
-    const response = createResponse('', code, message, res);
+    const response = createResponse('error', code, message, res);
     // res.status(code).json(response);
 }
 // ------------------------------------------------------------------- NEW END -----------------------------------------------------------------------------

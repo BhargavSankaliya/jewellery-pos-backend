@@ -1,6 +1,16 @@
 // utils/responseHandler.js
 function createResponse(data, code, message, res) {
-    if (data) {
+    if (data == 'error') {
+        const response = {
+            meta: {
+                code,
+                success: false,
+                message
+            }
+        };
+        res.status(code).json(response);
+    }
+    else if (data) {
         const response = {
             data,
             meta: {

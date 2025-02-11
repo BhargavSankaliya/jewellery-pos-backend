@@ -231,7 +231,7 @@ machineAuthController.activeSubCategories = async (req, res, next) => {
                     isDeleted: false,
                     status: 'Active',
                     parentCategory: {
-                        $ne: null
+                        $eq: convertIdToObjectId(req.query.parentCategory)
                     }
                 }
             },
@@ -275,6 +275,11 @@ machineAuthController.activeProducts = async (req, res, next) => {
                 category: convertIdToObjectId(req.body.category)
             });
         }
+        if (req.body.mostSelling) {
+            condition["$and"].push({
+                mostSelling: true
+            });
+        }
         if (req.body.gender != 'null' && !!req.body.gender) {
             condition["$and"].push({
                 $expr: {
@@ -287,7 +292,31 @@ machineAuthController.activeProducts = async (req, res, next) => {
                 stoneType: req.body.stoneType
             });
         }
+
+        if (!!req.body.search) {
+            condition["$and"].push(
+                {
+                    $or: [
+                        {
+                            'name': {
+                                $regex: '.*' + (req.body.search || '') + '.*',
+                                $options: 'i',
+                            },
+                        },
+                        {
+                            'productDisplay': {
+                                $regex: '.*' + (req.body.search || '') + '.*',
+                                $options: 'i',
+                            },
+                        },
+                    ]
+                }
+            );
+        }
         if (req.body.subCategory != 'null' && !!req.body.subCategory) {
+
+            req.body.subCategory = req.body.subCategory.map((x) => convertIdToObjectId(x))
+
             condition["$and"].push({
                 $expr: {
                     $gt: [
@@ -304,7 +333,6 @@ machineAuthController.activeProducts = async (req, res, next) => {
                     ]
                 }
             });
-
         }
         if (req.body.minValue != 'null' && !!req.body.minValue && req.body.maxValue != 'null' && !!req.body.maxValue) {
             condition["$and"].push({
@@ -369,6 +397,36 @@ machineAuthController.activeProducts = async (req, res, next) => {
         if (!getAllProducts || getAllProducts.length == 0) {
             return createResponse([], 200, "Products fetched successfully", res)
         }
+
+
+        getAllProducts.map((x) => {
+            x.items.map((y) => {
+                y.actualNaturalPrice = parseFloat(y.actualNaturalPrice.toFixed(2));
+                y.actualLabGrownPrice = parseFloat(y.actualLabGrownPrice.toFixed(2));
+                y.storeProductNaturalPrice = parseFloat(y.storeProductNaturalPrice.toFixed(2));
+                y.storeProductLabGrownPrice = parseFloat(y.storeProductLabGrownPrice.toFixed(2));
+                y.productNaturalPrice = parseFloat(y.productNaturalPrice.toFixed(2));
+                y.productLabGrownPrice = parseFloat(y.productLabGrownPrice.toFixed(2));
+                y.labGrownStock = y.labGrownStock ? y.labGrownStock : 0;
+
+                y.media = [];
+                if (y.files && y.files.length > 0) {
+                    y.files.map((z, i) => {
+                        y.media.push({ url: z, type: 'image' });
+                        if (y.videos && y.videos.length > 0 && i == 0) {
+                            y.videos.map((t) => {
+                                y.media.push({ url: t, type: 'video' })
+                            })
+                        }
+                    })
+                }
+                if (y.files && y.files.length == 0 && y.videos && y.videos.length > 0) {
+                    y.videos.map((t) => {
+                        y.media.push({ url: t, type: 'video' })
+                    })
+                }
+            })
+        })
         return createResponse(getAllProducts, 200, "Products fetched successfully", res)
 
     } catch (error) {
@@ -461,6 +519,38 @@ machineAuthController.getProductDetails = async (req, res, next) => {
         if (!getAllProducts || getAllProducts.length == 0) {
             return createResponse(null, 200, "Products fetched successfully", res)
         }
+
+        getAllProducts.map((x) => {
+            x.items.map((y) => {
+                y.actualNaturalPrice = parseFloat(y.actualNaturalPrice.toFixed(2));
+                y.actualLabGrownPrice = parseFloat(y.actualLabGrownPrice.toFixed(2));
+                y.storeProductNaturalPrice = parseFloat(y.storeProductNaturalPrice.toFixed(2));
+                y.storeProductLabGrownPrice = parseFloat(y.storeProductLabGrownPrice.toFixed(2));
+                y.productNaturalPrice = parseFloat(y.productNaturalPrice.toFixed(2));
+                y.productLabGrownPrice = parseFloat(y.productLabGrownPrice.toFixed(2));
+                y.labGrownStock = y.labGrownStock ? y.labGrownStock : 0;
+
+                y.media = [];
+                if (y.files && y.files.length > 0) {
+                    y.files.map((z, i) => {
+                        y.media.push({ url: z, type: 'image' });
+                        if (y.videos && y.videos.length > 0 && i == 0) {
+                            y.videos.map((t) => {
+                                y.media.push({ url: t, type: 'video' })
+                            })
+                        }
+                    })
+                };
+
+                if (y.files && y.files.length == 0 && y.videos && y.videos.length > 0) {
+                    y.videos.map((t) => {
+                        y.media.push({ url: t, type: 'video' })
+                    })
+                }
+
+            })
+        })
+
         return createResponse(getAllProducts[0], 200, "Products fetched successfully", res)
 
     } catch (error) {
@@ -479,17 +569,42 @@ machineAuthController.order = async (req, res, next) => {
 
         bodyData.products = bodyData.products.map((x) => { return { ...x, productId: convertIdToObjectId(x.productId), itemId: convertIdToObjectId(x.itemId), mrp: parseFloat(x.mrp), quantity: parseInt(x.quantity) } });
 
-        bodyData.products.map(async (x) => {
+        for (const x of bodyData.products) {
             let findProduct = await productModel.findById(x.productId);
-            if (findProduct && findProduct.items && findProduct.items.length > 0) {
-                findProduct.items.map((y) => {
-                    if (y._id.toString() == x.itemId.toString() && y.stocks > 0) {
-                        y.stocks = y.stocks - 1
-                    }
-                })
+
+            if (!findProduct || !findProduct.items || findProduct.items.length === 0) {
+                throw new CustomError("Product not found or no items available.", 404);
             }
-            findProduct.save();
-        })
+
+            let itemFound = false;
+
+            for (const y of findProduct.items) {
+                if (y._id.toString() === x.itemId.toString()) {
+                    if (x.diamondType === 'Natural') {
+                        if (y.stocks > 0 && y.stocks >= x.quantity) {
+                            y.stocks -= x.quantity;
+                            itemFound = true;
+                        } else {
+                            throw new CustomError("Natural Diamond Out of Stock.", 404);
+                        }
+                    } else {
+                        if (y.labGrownStock > 0 && y.labGrownStock >= x.quantity) {
+                            y.labGrownStock -= x.quantity;
+                            itemFound = true;
+                        } else {
+                            throw new CustomError("Lab Grown Diamond Out of Stock.", 404);
+                        }
+                    }
+                    break; // Stop loop once we find and update the item
+                }
+            }
+
+            if (!itemFound) {
+                throw new CustomError("Item not found in product.", 404);
+            }
+
+            await findProduct.save(); // Ensure changes are saved
+        }
 
         bodyData.paymentMade = 0;
 
@@ -561,6 +676,18 @@ machineAuthController.updateQuantityOFOrder = async (req, res, next) => {
         }
 
         return createResponse(findProduct, 200, "In cart update quantity Successfully", res)
+
+    } catch (error) {
+        errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.getCartOrdderCount = async (req, res, next) => {
+    try {
+
+        let findProduct = await AddToCartModel.aggregate([{ $match: { machineId: convertIdToObjectId(req.machine._id.toString()) } }]);
+
+        return createResponse({ count: findProduct.length > 0 ? findProduct.length : 0 }, 200, "Cart Count Fetched Successfully.", res)
 
     } catch (error) {
         errorHandler(error, req, res, next)
