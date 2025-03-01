@@ -24,7 +24,15 @@ router.post('/order-goldType-chart', orderController.goldTypeChartData);
 
 router.post('/order-goldType-chart-forStore', orderController.goldTypeChartDataForStore);
 
+router.post('/order-subcategory-wise-chat', orderController.subCategoryWiseChatData);
+
+router.post('/order-subcategory-wise-chat-forStore', orderController.subCategoryWiseChatDataForStore);
+
 router.get('/delete-order', orderController.deleteOrder);
+
+router.post('/send-mail', orderController.sendInvoiceMail);
+
+router.post('/send-mail-forMeta', orderController.sendInvoiceMailForMeta);
 
 
 module.exports = router

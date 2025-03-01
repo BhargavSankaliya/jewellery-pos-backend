@@ -20,9 +20,23 @@ const verifyToken = require("./middlewares/verifyToken");
 const verifyMachineToken = require("./middlewares/verifyMachineToken");
 const responseInterceptor = require("./middlewares/responseInterceptor");
 const config = require("./environmentVariable.json");
-const multer = require("multer");
 const fs = require("fs");
 const cors = require("cors");
+
+
+// const { S3Client } = require('@aws-sdk/client-s3');
+const AWS = require('aws-sdk');
+const multer = require("multer");
+const multerS3 = require('multer-s3');
+
+// Configure AWS SDK
+AWS.config.update({
+  accessKeyId: config.accessKeyId,
+  secretAccessKey: config.secretAccessKey,
+  region: config.region,
+});
+
+const s3 = new AWS.S3();
 
 app.use(cors());
 dotenv.config();
@@ -34,72 +48,94 @@ app.use(express.urlencoded({ limit: "2gb", extended: true })); // Use Express bu
 app.use(cookieParser());
 // app.use(responseInterceptor);
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    let dirPath = "uploads";
-    if (!!file.fieldname) {
-      if (file.fieldname === "cImage") {
-        dirPath = "uploads/product/category";
-      }
-      else if (file.fieldname === "adsImage" || file.fieldname === "adsVideo") {
-        dirPath = "uploads/ads";
-      }
-      else if (file.fieldname === 'storeLogo') {
-        dirPath = "uploads/storeLogo";
-      }
-      else if (file.fieldname === 'machineLogo') {
-        dirPath = "uploads/machineLogo";
-      }
-      else if (file.fieldname === 'productImage' || file.fieldname === 'productVideo') {
-        dirPath = "uploads/product";
-      }
-    }
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     let dirPath = "uploads";
+//     if (!!file.fieldname) {
+//       if (file.fieldname === "cImage") {
+//         dirPath = "uploads/product/category";
+//       }
+//       else if (file.fieldname === "adsImage" || file.fieldname === "adsVideo") {
+//         dirPath = "uploads/ads";
+//       }
+//       else if (file.fieldname === 'storeLogo') {
+//         dirPath = "uploads/storeLogo";
+//       }
+//       else if (file.fieldname === 'machineLogo') {
+//         dirPath = "uploads/machineLogo";
+//       }
+//       else if (file.fieldname === 'productImage' || file.fieldname === 'productVideo') {
+//         dirPath = "uploads/product";
+//       }
+//       else if (file.fieldname === 'invoicePDF') {
+//         dirPath = "uploads/invoicePDF";
+//       }
+//     }
 
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
+//     if (!fs.existsSync(dirPath)) {
+//       fs.mkdirSync(dirPath, { recursive: true });
+//     }
 
-    cb(null, dirPath);
-  },
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
-    );
-  },
-});
+//     cb(null, dirPath);
+//   },
+//   filename: function (req, file, cb) {
+//     cb(
+//       null,
+//       file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+//     );
+//   },
+// });
+// const upload = multer({
+//   storage: storage,
+//   // limits: { fileSize: 2 * 1024 * 1024 }, // Optional: Limit file size to 2MB
+// }).fields([
+//   {
+//     name: "cImage",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "adsImage",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "adsVideo",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "storeLogo",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "invoicePDF",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "machineLogo",
+//     maxCount: 1, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "productImage",
+//     maxCount: 15, // Maximum of 1 file per field
+//   },
+//   {
+//     name: "productVideo",
+//     maxCount: 15, // Maximum of 1 file per field
+//   },
+// ]);
+
+
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage()
   // limits: { fileSize: 2 * 1024 * 1024 }, // Optional: Limit file size to 2MB
 }).fields([
-  {
-    name: "cImage",
-    maxCount: 1, // Maximum of 1 file per field
-  },
-  {
-    name: "adsImage",
-    maxCount: 1, // Maximum of 1 file per field
-  },
-  {
-    name: "adsVideo",
-    maxCount: 1, // Maximum of 1 file per field
-  },
-  {
-    name: "storeLogo",
-    maxCount: 1, // Maximum of 1 file per field
-  },
-  {
-    name: "machineLogo",
-    maxCount: 1, // Maximum of 1 file per field
-  },
-  {
-    name: "productImage",
-    maxCount: 15, // Maximum of 1 file per field
-  },
-  {
-    name: "productVideo",
-    maxCount: 15, // Maximum of 1 file per field
-  },
+  { name: "cImage", maxCount: 1, },
+  { name: "adsImage", maxCount: 1, },
+  { name: "adsVideo", maxCount: 1, },
+  { name: "storeLogo", maxCount: 1, },
+  { name: "invoicePDF", maxCount: 1, },
+  { name: "machineLogo", maxCount: 1, },
+  { name: "productImage", maxCount: 15, },
+  { name: "productVideo", maxCount: 15, },
 ]);
 
 
@@ -114,7 +150,7 @@ app.use("/api/machine-mobile", verifyMachineToken, machineMobileRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product", verifyToken, productRoute);
-app.use("/api/order", verifyToken, orderRoute);
+app.use("/api/order", upload, verifyToken, orderRoute);
 app.use("/api/coupons", verifyToken, couponRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
 
@@ -137,15 +173,16 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 // Serve the index.html file for all requests (for Angular routing)
 app.get('*', (req, res) => {
+  console.log(path.join(__dirname, 'frontend/index.html'));
   res.sendFile(path.join(__dirname, 'frontend/index.html'));
 });
 
 const http = require("http");
 let server = http.createServer(app);
-app.set("port", process.env.PORT || config.PORT);
+app.set("port", config.PORT);
 
-server.listen(process.env.PORT || config.PORT, () => {
+server.listen(config.PORT, () => {
   connectDB();
 
-  console.log("app is running on PORT - " + (process.env.PORT || config.PORT));
+  console.log("app is running on PORT - " + (config.PORT));
 });

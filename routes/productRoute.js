@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router()
 const { validateSchema } = require('../models/baseModel');
 const { productController } = require('../controllers/productController');
-const productModel = require('../models/productModel');
+const { productModel } = require('../models/productModel');
 
 
 //ads create and update api (if update then _id pass in query)

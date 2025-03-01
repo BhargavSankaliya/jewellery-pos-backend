@@ -1,8 +1,11 @@
 {
     "MONGO_URL": "mongodb+srv://bhargavvidhan:Bhargav%402301@mypersonaltest.esvhw.mongodb.net/MetaJewels?retryWrites=true&w=majority&appName=MyPersonalTest",
+    "MONGO_PRODUCTION_URL": "mongodb+srv://metajewelryproduct:h6IjRMf8Vw0andFx@metajewelry.g4ehz.mongodb.net/MetaJewelry?retryWrites=true&w=majority&appName=MetaJewelry",
+    "MONGO_DEVELOPMENT_URL": "mongodb+srv://bhargavvidhan:Bhargav%402301@mypersonaltest.esvhw.mongodb.net/MetaJewels?retryWrites=true&w=majority&appName=MyPersonalTest",
     "JWT_SECRET": "your_very_secret_key",
-    "URL": "http://51.20.80.241:3660/",
-    "productionURL": "http://51.20.80.241:3660/",
+    "URL": "http://13.48.222.126/",
+    "productionURL": "http://13.48.222.126/",
+    "developmentURL": "http://51.20.80.241:3660/",
     "PORT": "3660",
     "HOST": "smtp.gmail.com",
     "SECURE": true,
@@ -10,5 +13,10 @@
     "AUTHUSER": "metajewelryproduct@gmail.com",
     "AUTHPASSWORD": "uodoummtprfqphxl",
     "TWILIO_ACCOUNT_SID": "AC361462dda9f0e8d052dc09026ad3ec09",
-    "TWILIO_AUTH_TOKEN": "41e98bba946231b12fc72ce9508b5817"
+    "TWILIO_AUTH_TOKEN": "41e98bba946231b12fc72ce9508b5817",
+    "accessKeyId": "AKIA5CBDRNFVMOR62IXT",
+    "secretAccessKey": "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",
+    "region": "eu-north-1",
+    "bucketName": "metajewelry",
+    "s3BaseUrl": "https://metajewelry.s3.eu-north-1.amazonaws.com/"
 }

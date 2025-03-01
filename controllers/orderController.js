@@ -5,7 +5,15 @@ const OrderModel = require("../models/orderModel.js");
 const { convertIdToObjectId } = require("./authController.js");
 const StoreModel = require("../models/storeModel.js");
 const { MachineModel } = require("../models/machineModel.js");
+const { sendEmailForMeta } = require("../helper/otpHelper.js");
 const orderController = {};
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
+const config = require("../environmentVariable.json");
+const fs = require('fs');
+const { PDFDocument } = require("pdf-lib");
+const moment = require("moment");
+
 
 orderController.list = async (req, res, next) => {
   try {
@@ -187,20 +195,6 @@ orderController.orderDetails = async (req, res, next) => {
         }
       },
       {
-        $lookup: {
-          from: "products",
-          localField: "products.productId",
-          foreignField: "_id",
-          as: "products.productDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$products.productDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
         $group: {
           _id: "$_id",
           firstname: {
@@ -229,6 +223,9 @@ orderController.orderDetails = async (req, res, next) => {
           },
           paymentMode: {
             $first: "$paymentMode"
+          },
+          remark: {
+            $first: "$remark"
           },
           cardReferenceNumber: {
             $first: "$cardReferenceNumber"
@@ -858,6 +855,160 @@ orderController.goldTypeChartDataForStore = async (req, res, next) => {
   }
 }
 
+/* sub category wise base order data */
+orderController.subCategoryWiseChatData = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          isCancel: false,
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $arrayElemAt: [
+              "$products.productDetails.subCategory",
+              0
+            ]
+          },
+          count: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          subcategoryId: "$_id",
+          count: 1
+        }
+      },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "subcategoryId",
+          foreignField: "_id",
+          as: "subcategoryDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$subcategoryDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          categoryName: "$subcategoryDetails.name"
+        }
+      }
+    ]
+
+    if (req.body.subCategory && req.body.subCategory != 'null') {
+
+      query.push({
+        $match: {
+          subcategoryId: convertIdToObjectId(req.body.subCategory)
+        }
+      })
+    }
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+/* sub category wise store base order data */
+orderController.subCategoryWiseChatDataForStore = async (req, res, next) => {
+  try {
+
+    let query = [
+      {
+        $match: {
+          storeId: convertIdToObjectId(req.body.storeId ? req.body.storeId : req.store._id.toString()),
+          isCancel: false
+        }
+      },
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(req.body.startDate), // Ensure the correct range
+            $lt: new Date(req.body.endDate)
+          }
+        }
+      },
+      {
+        $unwind: {
+          path: "$products",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $arrayElemAt: [
+              "$products.productDetails.subCategory",
+              0
+            ]
+          },
+          count: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          subcategoryId: "$_id",
+          count: 1
+        }
+      },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "subcategoryId",
+          foreignField: "_id",
+          as: "subcategoryDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$subcategoryDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          categoryName: "$subcategoryDetails.name"
+        }
+      }
+    ]
+
+    let result = await OrderModel.aggregate(query);
+
+    createResponse(result, 200, "count get successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
 /* update order status */
 orderController.deleteOrder = async (req, res, next) => {
   try {
@@ -868,6 +1019,245 @@ orderController.deleteOrder = async (req, res, next) => {
     orderDetails.save();
 
     createResponse(null, 200, "order deleted successfully", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+
+// orderController.sendInvoiceMail = async (req, res, next) => {
+//   try {
+
+//     let orderObjectId = convertIdToObjectId(req.body.orderId);
+//     let OrderDetails = await OrderModel.findOne({ _id: orderObjectId });
+
+//     if (!OrderDetails) {
+//       return res.status(404).json({ message: "Order not found" });
+//     }
+
+
+//     const transporter = nodemailer.createTransport({
+//       host: config.HOST,
+//       port: config.emailPORT,
+//       secure: config.SECURE,
+//       auth: {
+//         user: config.AUTHUSER,
+//         pass: config.AUTHPASSWORD,
+//       },
+//     });
+
+//     // const invoicePath = req.files.invoicePDF[0].path;
+
+//     // // Read the original PDF file
+//     // const existingPdfBytes = fs.readFileSync(invoicePath);
+
+//     // // Load the PDF document
+//     // const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+//     // // Optimize the PDF using object streams (reduces size)
+//     // const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
+
+//     // console.log(`Original Size: ${existingPdfBytes.length / 1024} KB`);
+//     // console.log(`Compressed Size: ${compressedPdfBytes.length / 1024} KB`);
+
+//     const inputPath = req.files.invoicePDF[0].path;
+//     const outputPath = inputPath.replace(".pdf", "_compressed.pdf");
+
+//     // Compress PDF
+//     await compressPDF(inputPath, outputPath);
+
+//     // Read compressed PDF
+//     const compressedPdf = fs.readFileSync(outputPath);
+
+
+//     const mailOptions = {
+//       from: config.AUTHUSER,
+//       to: OrderDetails.email,
+//       subject: `Order Created - ${OrderDetails.orderNumber}`,
+//       text: `Your order has been created successfully. Please find the attached invoice.`,
+//       attachments: [
+//         {
+//           filename: `Order_${OrderDetails.orderNumber}.pdf`,
+//           content: compressedPdf,
+//           contentType: "application/pdf",
+//         },
+//       ],
+//     };
+
+//     transporter.sendMail(mailOptions);
+//     // fs.unlinkSync(inputPath);
+//     createResponse(null, 200, "Mail sended successfully.", res);
+
+//   } catch (error) {
+//     errorHandler(error, req, res)
+//   }
+// }
+
+async function compressPDF(inputPath, outputPath) {
+  try {
+    // Read input PDF
+    const pdfBytes = fs.readFileSync(inputPath);
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+
+    // Iterate through pages
+    const pages = pdfDoc.getPages();
+    for (let page of pages) {
+      const { width, height } = page.getSize();
+      page.setSize(width * 0.99, height * 0.99); // Slightly reduce size
+    }
+
+    // Save compressed PDF
+    const compressedPdfBytes = await pdfDoc.save();
+    fs.writeFileSync(outputPath, compressedPdfBytes);
+    console.log("PDF Compressed Successfully");
+  } catch (error) {
+    console.error("Compression Error:", error);
+  }
+}
+
+
+orderController.sendInvoiceMail = async (req, res, next) => {
+  try {
+
+    let orderObjectId = convertIdToObjectId(req.body.orderId);
+    let OrderDetails = await OrderModel.findOne({ _id: orderObjectId });
+
+    if (!OrderDetails) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const storeDetails = await StoreModel.findOne({ _id: convertIdToObjectId(OrderDetails.storeId) });
+
+
+    const transporter = nodemailer.createTransport({
+      host: config.HOST,
+      port: config.emailPORT,
+      secure: config.SECURE,
+      auth: {
+        user: config.AUTHUSER,
+        pass: config.AUTHPASSWORD,
+      },
+    });
+
+    // Read compressed PDF
+    const htmlContent = fs.readFileSync("./htmlpages/order-pdf.html", "utf8");
+
+    let storeAddressD = '';
+    if (storeDetails.city) {
+      storeAddressD = storeDetails.city + ", ";
+    }
+    if (storeDetails.state) {
+      storeAddressD = storeAddressD + storeDetails.state + ", ";
+    }
+    if (storeDetails.country) {
+      storeAddressD = storeAddressD + storeDetails.country + ", ";
+    }
+    if (storeDetails.pincode) {
+      storeAddressD = storeAddressD + storeDetails.pincode + ", ";
+    }
+
+    const replacements = {
+      "{{firstname}}": OrderDetails.firstname,
+      "{{lastname}}": OrderDetails.lastname,
+      "{{orderNumber}}": `${OrderDetails.orderNumber}`,
+      "{{orderDate}}": moment(OrderDetails.createdAt).format("yyyy-MM-DD"),
+      "{{totalAmount}}": OrderDetails.paymentMade,
+      "{{email}}": OrderDetails.email,
+      "{{phone}}": OrderDetails.phone,
+      "{{storeName}}": storeDetails.storeName,
+      "{{storeAddress}}": storeDetails.address,
+      "{{storeAddressDetails}}": storeDetails.city ? storeDetails.city : "",
+      "{{storeEmail}}": storeDetails.email,
+      "{{storePhone}}": storeDetails.phone[0].countryCode + " " + storeDetails.phone[0].phoneNumber,
+    };
+
+    let modifiedHtml = htmlContent;
+    for (const key in replacements) {
+      modifiedHtml = modifiedHtml.replace(new RegExp(key, "g"), replacements[key]);
+    }
+
+    const mailOptions = {
+      from: storeDetails.email,
+      to: OrderDetails.email,
+      subject: `Order Created - ${OrderDetails.orderNumber}`,
+      html: modifiedHtml
+    };
+
+    transporter.sendMail(mailOptions);
+    // fs.unlinkSync(inputPath);
+    createResponse(null, 200, "Mail sended successfully.", res);
+
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+orderController.sendInvoiceMailForMeta = async (req, res, next) => {
+  try {
+
+    let orderObjectId = convertIdToObjectId(req.body.orderId);
+    let OrderDetails = await OrderModel.findOne({ _id: orderObjectId });
+
+    if (!OrderDetails) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const storeDetails = await StoreModel.findOne({ _id: convertIdToObjectId(OrderDetails.storeId) });
+
+
+    const transporter = nodemailer.createTransport({
+      host: config.HOST,
+      port: config.emailPORT,
+      secure: config.SECURE,
+      auth: {
+        user: config.AUTHUSER,
+        pass: config.AUTHPASSWORD,
+      },
+    });
+
+    // Read compressed PDF
+    const htmlContent = fs.readFileSync("./htmlpages/storeToMeta.html", "utf8");
+
+    let storeAddressD = '';
+    if (storeDetails.city) {
+      storeAddressD = storeDetails.city + ", ";
+    }
+    if (storeDetails.state) {
+      storeAddressD = storeAddressD + storeDetails.state + ", ";
+    }
+    if (storeDetails.country) {
+      storeAddressD = storeAddressD + storeDetails.country + ", ";
+    }
+    if (storeDetails.pincode) {
+      storeAddressD = storeAddressD + storeDetails.pincode + ", ";
+    }
+
+    const replacements = {
+      "{{orderNumber}}": `${OrderDetails.orderNumber}`,
+      "{{orderDate}}": moment(OrderDetails.createdAt).format("yyyy-MM-DD"),
+      "{{totalAmount}}": OrderDetails.paymentMade,
+      "{{storeName}}": storeDetails.storeName,
+      "{{storeAddress}}": storeDetails.address,
+      "{{storeAddressDetails}}": storeDetails.city ? storeDetails.city : "",
+      "{{storeEmail}}": storeDetails.email,
+      "{{storePhone}}": storeDetails.phone[0].countryCode + " " + storeDetails.phone[0].phoneNumber,
+    };
+
+    let modifiedHtml = htmlContent;
+    for (const key in replacements) {
+      modifiedHtml = modifiedHtml.replace(new RegExp(key, "g"), replacements[key]);
+    }
+
+    const mailOptions = {
+      from: "metaonline@metajewelry.com",
+      to: storeDetails.email,
+      subject: `New Order Received - ${OrderDetails.orderNumber}`,
+      html: modifiedHtml
+    };
+
+    transporter.sendMail(mailOptions);
+    // fs.unlinkSync(inputPath);
+    createResponse(null, 200, "Mail sended successfully.", res);
 
   } catch (error) {
     errorHandler(error, req, res)

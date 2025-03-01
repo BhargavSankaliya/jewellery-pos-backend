@@ -154,7 +154,7 @@ const productSchema = new mongoose.Schema(
       required: false,
     },
     stoneType: {
-      type: String,
+      type: [String],
       default: '',
       required: false,
     },
@@ -209,4 +209,4 @@ productSchema.add(commonSchema);
 
 const productModel = mongoose.model("product", productSchema);
 
-module.exports = productModel;
+module.exports = { productModel, productSchema };

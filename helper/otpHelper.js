@@ -29,6 +29,58 @@ const sendOTPEmail = async (email, otp, req, res) => {
 
 };
 
+const sendEmailForUser = async (data, req, res) => {
+
+    try {
+        const transporter = nodemailer.createTransport({
+            host: config.HOST,
+            port: config.emailPORT,
+            secure: config.SECURE,
+            auth: {
+                user: config.AUTHUSER,
+                pass: config.AUTHPASSWORD
+            }
+        });
+        const mailOptions = {
+            from: config.AUTHUSER,
+            to: data.email,
+            subject: 'Order',
+            text: `Your order has been placed. Order ID : ${data.orderId}`
+        };
+
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        errorHandler(error, req, res)
+    }
+
+};
+
+const sendEmailForMeta = async (data, req, res) => {
+
+    try {
+        const transporter = nodemailer.createTransport({
+            host: config.HOST,
+            port: config.emailPORT,
+            secure: config.SECURE,
+            auth: {
+                user: config.AUTHUSER,
+                pass: config.AUTHPASSWORD
+            }
+        });
+        const mailOptions = {
+            from: config.AUTHUSER,
+            to: "metajewelryproduct@gmail.com",
+            subject: data.firstname + " " + data.lastname + " Create order",
+            text: `${data.firstname} ${data.lastname} has create new order. Order ID : ${data.orderId}`
+        };
+
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        errorHandler(error, req, res)
+    }
+
+};
+
 
 const sendOTPPhone = async (phoneNumber, otp, req, res) => {
     try {
@@ -45,4 +97,4 @@ const sendOTPPhone = async (phoneNumber, otp, req, res) => {
 
 };
 
-module.exports = { sendOTPEmail, sendOTPPhone };
+module.exports = { sendOTPEmail, sendOTPPhone, sendEmailForUser, sendEmailForMeta };

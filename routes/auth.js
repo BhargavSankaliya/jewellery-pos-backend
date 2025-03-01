@@ -30,6 +30,9 @@ router.post('/change-password', verifyToken, authController.resetPassword);
 //File upload
 router.post('/file-upload', FileUpload);
 
+//File upload
+// router.get('/setStoneTypeMultiple', authController.setMultipleStoneTypeInProduct);
+
 
 
 

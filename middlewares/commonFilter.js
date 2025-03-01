@@ -305,27 +305,12 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                                 ]
                                             },
                                             then: {
-                                                $add: [
-                                                    {
-                                                        $multiply: [
-                                                            {
-                                                                $divide: [
-                                                                    "$$item.diamondTypeNaturalMRP",
-                                                                    "$devidation"
-                                                                ]
-                                                            },
-                                                            "$storePrice"
-                                                        ]
-                                                    },
-                                                    "$$item.productNaturalPrice"
+                                                $multiply: [
+                                                    "$$item.productNaturalPrice",
+                                                    "$storePrice"
                                                 ]
                                             },
-                                            else: {
-                                                $divide: [
-                                                    "$$item.diamondTypeNaturalMRP",
-                                                    "$devidation"
-                                                ]
-                                            }
+                                            else: "$$item.productNaturalPrice"
                                         }
                                     },
                                     storeProductLabGrownPrice: {
@@ -341,27 +326,12 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                                 ]
                                             },
                                             then: {
-                                                $add: [
-                                                    {
-                                                        $multiply: [
-                                                            {
-                                                                $divide: [
-                                                                    "$$item.diamondTypeLabGrownMRP",
-                                                                    "$devidation"
-                                                                ]
-                                                            },
-                                                            "$storePrice"
-                                                        ]
-                                                    },
-                                                    "$$item.productLabGrownPrice"
+                                                $multiply: [
+                                                    "$$item.productLabGrownPrice",
+                                                    "$storePrice"
                                                 ]
                                             },
-                                            else: {
-                                                $divide: [
-                                                    "$$item.diamondTypeLabGrownMRP",
-                                                    "$devidation"
-                                                ]
-                                            }
+                                            else: "$$item.productLabGrownPrice"
                                         }
                                     }
                                 }

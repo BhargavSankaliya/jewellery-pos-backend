@@ -8,12 +8,39 @@ const mongoose = require("mongoose");
 const config = require("../environmentVariable.json");
 const createResponse = require("../middlewares/response.js");
 const StoreModel = require("../models/storeModel.js");
+const { productModel } = require("../models/productModel.js");
 const authController = {}
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const path = require('path');
+
+
+
+// Configure AWS S3 Client
+const s3 = new S3Client({
+  region: config.region,
+  credentials: {
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  },
+});
+
+const fileInS3Upload = async (files, path) => {
+
+  const fileKey = `${path}/${Date.now()}-${files.fieldname}`;
+  const params = {
+    Bucket: config.bucketName, // Corrected key name
+    Key: fileKey, // Corrected key name
+    Body: files.buffer, // Corrected key name
+    ContentType: files.mimetype,
+    ACL: 'public-read',
+  };
+  await s3.send(new PutObjectCommand(params));
+  return `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${fileKey}`;
+
+}
 
 const FileUpload = async (req, res, next) => {
   try {
-    const file = [];
-    const configURL = config.URL;
 
     let cImage = '';
     let adsImage = '';
@@ -21,69 +48,113 @@ const FileUpload = async (req, res, next) => {
     let storeLogo = '';
     let productImage = '';
     let productVideo = '';
+    let machineLogo = '';
 
     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
-      req.files.cImage.map((x) => {
-        cImage = configURL + x.destination + "/" + x.filename
+      const cUploadIMage = req.files.cImage.map(async (x) => {
+        cImage = await fileInS3Upload(x, "uploads/product/category")
       })
+
+      await Promise.all(cUploadIMage);
     }
     else {
       cImage = "";
     }
 
     if (req.files && !!req.files.adsImage && req.files.adsImage.length > 0) {
-      req.files.adsImage.map((x) => {
-        adsImage = configURL + x.destination + "/" + x.filename
+      const adsImageU = req.files.adsImage.map(async (x) => {
+        adsImage = await fileInS3Upload(x, "uploads/ads")
       })
+
+      await Promise.all(adsImageU);
     }
     else {
       adsImage = '';
     }
 
     if (req.files && !!req.files.productImage && req.files.productImage.length > 0) {
-      req.files.productImage.map((x) => {
-        productImage = configURL + x.destination + "/" + x.filename
+
+      const productImageu = req.files.productImage.map(async (x) => {
+        productImage = await fileInS3Upload(x, "uploads/product")
       })
+
+      await Promise.all(productImageu);
     }
     else {
       productImage = '';
     }
+
+
+
     if (req.files && !!req.files.productVideo && req.files.productVideo.length > 0) {
-      req.files.productVideo.map((x) => {
-        productVideo = configURL + x.destination + "/" + x.filename
+      const productVideoU = req.files.productVideo.map(async (x) => {
+        productVideo = await fileInS3Upload(x, "uploads/product")
       })
+
+      await Promise.all(productVideoU);
     }
     else {
       productVideo = '';
     }
 
     if (req.files && !!req.files.adsVideo && req.files.adsVideo.length > 0) {
-      req.files.adsVideo.map((x) => {
-        adsVideo = configURL + x.destination + "/" + x.filename
+      const adsVideoU = req.files.adsVideo.map(async (x) => {
+        adsVideo = await fileInS3Upload(x, "uploads/ads")
       })
+
+      await Promise.all(adsVideoU);
     }
     else {
       adsVideo = '';
     }
 
     if (req.files && !!req.files.storeLogo && req.files.storeLogo.length > 0) {
-      req.files.storeLogo.map((x) => {
-        storeLogo = configURL + x.destination + "/" + x.filename
+      const storeLogoU = req.files.storeLogo.map(async (x) => {
+        storeLogo = await fileInS3Upload(x, "uploads/storeLogo")
       })
+
+      await Promise.all(storeLogoU);
     }
     else {
       storeLogo = '';
     }
 
     if (req.files && !!req.files.machineLogo && req.files.machineLogo.length > 0) {
-      req.files.machineLogo.map((x) => {
-        machineLogo = configURL + x.destination + "/" + x.filename
+      const machineLogoU = req.files.machineLogo.map(async (x) => {
+        machineLogo = await fileInS3Upload(x, "uploads/machineLogo")
       })
+
+      await Promise.all(machineLogoU);
     }
     else {
       machineLogo = '';
     }
 
+
+    // if (req.files[findKey] && req.files[findKey].length > 0) {
+    //   const fileUploadPromises = req.files[findKey].map(async (file) => {
+    //     const fileKey = `uploads/${Date.now()}-${path.basename(file.originalname)}`;
+    //     const params = {
+    //       Bucket: config.bucketName, // Corrected key name
+    //       Key: fileKey, // Corrected key name
+    //       Body: file.buffer, // Corrected key name
+    //       ContentType: file.mimetype,
+    //       ACL: 'public-read',
+    //     };
+    //     await s3.send(new PutObjectCommand(params));
+    //     return `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${fileKey}`;
+    //   });
+
+    //   uploadedFiles[findKey] = await Promise.all(fileUploadPromises); // Store uploaded files
+    // } else {
+    //   uploadedFiles[findKey] = [];
+    // }
+
+    // res.status(200).json({
+    //   success: true,
+    //   message: 'Files uploaded successfully.',
+    //   data: uploadedFiles
+    // });
     createResponse({
       cImage, adsVideo, adsImage, storeLogo, machineLogo, productImage, productVideo
     }, 200, 'File Upload Successfully.', res)
@@ -92,6 +163,90 @@ const FileUpload = async (req, res, next) => {
     errorHandler(error, res, res)
   }
 }
+
+
+// const FileUpload = async (req, res, next) => {
+//   try {
+//     const file = [];
+//     const configURL = config.URL;
+
+//     let cImage = '';
+//     let adsImage = '';
+//     let adsVideo = '';
+//     let storeLogo = '';
+//     let productImage = '';
+//     let productVideo = '';
+
+//     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
+//       req.files.cImage.map((x) => {
+//         cImage = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       cImage = "";
+//     }
+
+//     if (req.files && !!req.files.adsImage && req.files.adsImage.length > 0) {
+//       req.files.adsImage.map((x) => {
+//         adsImage = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       adsImage = '';
+//     }
+
+//     if (req.files && !!req.files.productImage && req.files.productImage.length > 0) {
+//       req.files.productImage.map((x) => {
+//         productImage = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       productImage = '';
+//     }
+//     if (req.files && !!req.files.productVideo && req.files.productVideo.length > 0) {
+//       req.files.productVideo.map((x) => {
+//         productVideo = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       productVideo = '';
+//     }
+
+//     if (req.files && !!req.files.adsVideo && req.files.adsVideo.length > 0) {
+//       req.files.adsVideo.map((x) => {
+//         adsVideo = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       adsVideo = '';
+//     }
+
+//     if (req.files && !!req.files.storeLogo && req.files.storeLogo.length > 0) {
+//       req.files.storeLogo.map((x) => {
+//         storeLogo = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       storeLogo = '';
+//     }
+
+//     if (req.files && !!req.files.machineLogo && req.files.machineLogo.length > 0) {
+//       req.files.machineLogo.map((x) => {
+//         machineLogo = configURL + x.destination + "/" + x.filename
+//       })
+//     }
+//     else {
+//       machineLogo = '';
+//     }
+
+//     createResponse({
+//       cImage, adsVideo, adsImage, storeLogo, machineLogo, productImage, productVideo
+//     }, 200, 'File Upload Successfully.', res)
+
+//   } catch (error) {
+//     errorHandler(error, res, res)
+//   }
+// }
 
 // resend otp api
 authController.ResendOtpController = async (req, res, next) => {
@@ -306,6 +461,10 @@ authController.resetPassword = async (req, res, next) => {
     errorHandler(error, req, res)
   }
 };
+
+// authController.setMultipleStoneTypeInProduct = async (req, res, next) => {
+//   await productModel.updateMany({}, { $set: { stoneType: "Diamond" } })
+// }
 
 authController.refetchUserController = async (req, res, next) => {
   const token = req.store.token;

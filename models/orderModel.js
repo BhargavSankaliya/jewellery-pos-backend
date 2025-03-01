@@ -2,11 +2,115 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const commonSchema = require("./CommonModel");
 const StoreModel = require("./storeModel");
+const { productModel, productSchema } = require("./productModel");
 
-const productsSchema = new mongoose.Schema({
+const productsSchemas = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
+  },
+  productDetails: {
+    productUniqueNumber: {
+      type: String,
+      required: false,
+    },
+    name: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "productCategoryModel",
+      required: false,
+    },
+    subCategory: {
+      type: [mongoose.Schema.Types.ObjectId],
+      required: false,
+    },
+    gender: [{
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: false,
+    }],
+    productDisplay: {
+      type: String,
+      default: false,
+      required: [false, 'Product display is required'],
+    },
+    mostSelling: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    grossWeight: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    grossWeightName: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    diaWeight: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    diaWeightName: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    colorSTWeight: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    colorSTWeightName: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    stoneColor: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    stoneType: {
+      type: [String],
+      default: '',
+      required: false,
+    },
+    mainStoneWeight: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    mainStoneWeightName: {
+      type: String,
+      default: '',
+      required: false,
+    },
+    diaPcs: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    colorStPcs: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    mainStonePcs: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
   },
   itemId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -125,7 +229,7 @@ const orderSchema = new mongoose.Schema(
       required: [false, 'Store is required.'],
     },
     products: {
-      type: [productsSchema], // Array of location objects
+      type: [productsSchemas], // Array of location objects
       require: true,
       default: []
     },
@@ -147,6 +251,11 @@ const orderSchema = new mongoose.Schema(
       default: "Cash"
     },
     cardReferenceNumber: {
+      type: String,
+      required: false,
+      default: ""
+    },
+    remark: {
       type: String,
       required: false,
       default: ""

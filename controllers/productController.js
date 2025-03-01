@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const config = require("../environmentVariable.json");
 const createResponse = require("../middlewares/response.js");
 const { convertIdToObjectId } = require("./authController.js");
-const productModel = require("../models/productModel.js");
+const { productModel } = require("../models/productModel.js");
 const productController = {};
 
 productController.createUpdateProduct = async (req, res, next) => {
@@ -216,19 +216,14 @@ productController.listForStore = async (req, res, next) => {
                           ]
                         },
                         then: {
-                          $add: [
+                          $multiply: [
                             {
-                              $multiply: [
-                                {
-                                  $divide: [
-                                    "$$item.diamondTypeNaturalMRP",
-                                    "$devidation"
-                                  ]
-                                },
-                                "$storePrice"
+                              $divide: [
+                                "$$item.diamondTypeNaturalMRP",
+                                "$devidation"
                               ]
                             },
-                            "$$item.productNaturalPrice"
+                            "$storePrice"
                           ]
                         },
                         else: {
@@ -252,19 +247,15 @@ productController.listForStore = async (req, res, next) => {
                           ]
                         },
                         then: {
-                          $add: [
+                          $multiply: [
                             {
-                              $multiply: [
-                                {
-                                  $divide: [
-                                    "$$item.diamondTypeLabGrownMRP",
-                                    "$devidation"
-                                  ]
-                                },
-                                "$storePrice"
+                              $divide: [
+                                "$$item.diamondTypeLabGrownMRP",
+                                "$devidation"
                               ]
+
                             },
-                            "$$item.productLabGrownPrice"
+                            "$storePrice"
                           ]
                         },
                         else: {
@@ -393,6 +384,14 @@ productController.listForStore = async (req, res, next) => {
             "$items.actualNaturalPrice",
           actualLabGrownPrice:
             "$items.actualLabGrownPrice",
+          productNaturalPrice:
+            "$items.productNaturalPrice",
+          productLabGrownPrice:
+            "$items.productLabGrownPrice",
+          storeProductNaturalPrice:
+            "$items.storeProductNaturalPrice",
+          storeProductLabGrownPrice:
+            "$items.storeProductLabGrownPrice",
           itemId: "$items._id"
         }
       }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order PDF</title>
+</head>
+
+<body>
+    <p>Dear Meta Jewelry</p>
+    <h3 style="font-style: italic;font-size: 1.8rem;">You have received new order !</h3>
+    <p>A new order has been placed with {{storeName}} Store Inc. for a total of ${{totalAmount}}</p>
+    <p>Your order details are shown below for your reference :</p>
+    <p style="font-weight: 600;font-size: 1.2rem;">Order : {{orderNumber}} ({{orderDate}})</p>
+    <p style="font-weight: 600;font-size: 1.2rem;">Total Amount : ${{totalAmount}}</p>
+    <br>
+    <div>
+        <p style="margin:0; margin-bottom:8px; font-weight: 600;">Billing Details : </p>
+        <p style="margin:0; margin-bottom:8px;">{{storeName}}</p>
+        <p style="margin:0; margin-bottom:8px;">{{storeAddress}}</p>
+        <p style="margin:0; margin-bottom:8px;">{{storeAddressDetails}}</p>
+        <p style="margin:0; margin-bottom:8px;">Email : {{storeEmail}}</p>
+        <p style="margin:0; margin-bottom:8px;">Tel : {{storePhone}}</p>
+    </div>
+    <br>
+    <div>
+        <p style="margin:0; margin-bottom:8px; font-weight: 600;">From : </p>
+        <p style="margin:0; margin-bottom:8px;">{{storeName}}</p>
+        <p style="margin:0; margin-bottom:8px;">{{storeAddress}}</p>
+        <p style="margin:0; margin-bottom:8px;">{{storeAddressDetails}}</p>
+        <p style="margin:0; margin-bottom:8px;">Email : {{storeEmail}}</p>
+        <p style="margin:0; margin-bottom:8px;">Tel : {{storePhone}}</p>
+    </div>
+</body>
+
+</html>

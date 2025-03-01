@@ -12,9 +12,10 @@ const { commonFilter } = require("../middlewares/commonFilter.js");
 const AdsModel = require("../models/adsModel.js");
 const ProductCategory = require("../models/productCategoryModel.js");
 const { convertIdToObjectId } = require("./authController.js");
-const productModel = require("../models/productModel.js");
+const { productModel } = require("../models/productModel.js");
 const OrderModel = require("../models/orderModel.js");
 const AddToCartModel = require("../models/addToCartModel.js");
+const { sendEmailForUser, sendEmailForMeta } = require("../helper/otpHelper.js");
 const machineAuthController = {}
 
 // Login API
@@ -389,15 +390,49 @@ machineAuthController.activeProducts = async (req, res, next) => {
                 }
             },
             {
-                $project: { ...commonFilter.productObject, storePrice: 1, devidation: 1, storeDiscount: 1, }
+                $project: {
+                    ...commonFilter.productObject,
+                    storePrice: 1,
+                    devidation: 1,
+                    storeDiscount: 1,
+                    stoneType: {
+                        $reduce: {
+                            input: "$stoneType",
+                            initialValue: "",
+                            in: {
+                                $concat: [
+                                    "$$value",
+                                    {
+                                        $cond: [
+                                            { $eq: ["$$value", ""] },
+                                            "",
+                                            ", "
+                                        ]
+                                    },
+                                    "$$this"
+                                ]
+                            }
+                        }
+                    },
+                    actualPrice: {
+                        $arrayElemAt: ["$items.actualNaturalPrice", 0]
+                    }
+                }
             }
         ]
+
+        if (!!req.body.isSort && req.body.isSort != "null") {
+            categoryPipeline.push({
+                $sort: {
+                    "actualPrice": req.body.isSort == 1 ? 1 : -1
+                }
+            })
+        }
 
         let getAllProducts = await productModel.aggregate(categoryPipeline);
         if (!getAllProducts || getAllProducts.length == 0) {
             return createResponse([], 200, "Products fetched successfully", res)
         }
-
 
         getAllProducts.map((x) => {
             x.items.map((y) => {
@@ -511,7 +546,31 @@ machineAuthController.getProductDetails = async (req, res, next) => {
                 }
             },
             {
-                $project: { ...commonFilter.productObject, storePrice: 1, devidation: 1, storeDiscount: 1, }
+                $project: {
+                    ...commonFilter.productObject,
+                    storePrice: 1,
+                    devidation: 1,
+                    storeDiscount: 1,
+                    stoneType: {
+                        $reduce: {
+                            input: "$stoneType",
+                            initialValue: "",
+                            in: {
+                                $concat: [
+                                    "$$value",
+                                    {
+                                        $cond: [
+                                            { $eq: ["$$value", ""] },
+                                            "",
+                                            ", "
+                                        ]
+                                    },
+                                    "$$this"
+                                ]
+                            }
+                        }
+                    }
+                }
             }
         ]
 
@@ -569,12 +628,38 @@ machineAuthController.order = async (req, res, next) => {
 
         bodyData.products = bodyData.products.map((x) => { return { ...x, productId: convertIdToObjectId(x.productId), itemId: convertIdToObjectId(x.itemId), mrp: parseFloat(x.mrp), quantity: parseInt(x.quantity) } });
 
-        for (const x of bodyData.products) {
+        for (let i = 0; i < bodyData.products.length; i++) {
+
+            const x = bodyData.products[i];
             let findProduct = await productModel.findById(x.productId);
 
             if (!findProduct || !findProduct.items || findProduct.items.length === 0) {
                 throw new CustomError("Product not found or no items available.", 404);
             }
+
+            bodyData.products[i].productDetails = {
+                productUniqueNumber: findProduct.productUniqueNumber,
+                name: findProduct.name,
+                description: findProduct.description,
+                category: findProduct.category,
+                subCategory: findProduct.subCategory,
+                gender: findProduct.gender,
+                productDisplay: findProduct.productDisplay,
+                mostSelling: findProduct.mostSelling,
+                grossWeight: findProduct.grossWeight,
+                grossWeightName: findProduct.grossWeightName,
+                diaWeight: findProduct.diaWeight,
+                diaWeightName: findProduct.diaWeightName,
+                colorSTWeight: findProduct.colorSTWeight,
+                colorSTWeightName: findProduct.colorSTWeightName,
+                stoneColor: findProduct.stoneColor,
+                stoneType: findProduct.stoneType,
+                mainStoneWeight: findProduct.mainStoneWeight,
+                mainStoneWeightName: findProduct.mainStoneWeightName,
+                diaPcs: findProduct.diaPcs,
+                colorStPcs: findProduct.colorStPcs,
+                mainStonePcs: findProduct.mainStonePcs,
+            };
 
             let itemFound = false;
 
@@ -621,6 +706,14 @@ machineAuthController.order = async (req, res, next) => {
 
 
         let orderCreate = await OrderModel.create(bodyData);
+
+        sendEmailForUser({ email: orderCreate.email, orderId: orderCreate.orderNumber });
+
+        sendEmailForMeta({
+            orderId: orderCreate.orderNumber, firstname: orderCreate.firstname,
+            lastname: orderCreate.lastname
+        })
+
         await AddToCartModel.deleteMany({ machineId: convertIdToObjectId(req.machine._id.toString()) });
         return createResponse(orderCreate, 200, "Order Placed Successfully", res)
 
