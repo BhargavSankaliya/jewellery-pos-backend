@@ -41,4 +41,10 @@ router.get("/cart-remove-allItems", machineAuthController.cartRemoveAllItemFromO
 // generate order api
 router.post("/order", validateSchema(OrderModel), machineAuthController.order);
 
+// force update details api
+router.get("/forceUpdate-details", machineAuthController.forceUpdateDetails);
+
+// force update details api
+router.post("/add-time-entry", machineAuthController.addTimeEntry);
+
 module.exports = router

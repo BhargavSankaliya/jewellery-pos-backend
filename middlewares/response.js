@@ -3,12 +3,12 @@ function createResponse(data, code, message, res) {
     if (data == 'error') {
         const response = {
             meta: {
-                code,
+                code: message == 'Invalid token' ? 401 : code,
                 success: false,
                 message
             }
         };
-        res.status(code).json(response);
+        res.status(message == 'Invalid token' ? 401 : code).json(response);
     }
     else if (data) {
         const response = {

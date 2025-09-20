@@ -181,6 +181,18 @@ const productsSchemas = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  devidationForLabGrown: {
+    type: Number,
+    required: true,
+  },
+  storePriceForLabGrown: {
+    type: Number,
+    required: true,
+  },
+  storeDiscountForLabGrown: {
+    type: Number,
+    required: true,
+  },
 });
 
 const orderSchema = new mongoose.Schema(

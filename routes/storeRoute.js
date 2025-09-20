@@ -12,6 +12,9 @@ router.post("/create-update", validateSchema(StoreModel), storeController.create
 // ads list and active list if query isActive:true then
 router.get("/list", storeController.list);
 
+// ads list and active list if query isActive:true then
+router.post("/changePassword", storeController.changePasswordByEmail);
+
 // ads details
 router.get("/getById", storeController.getByAdsId);
 

@@ -1,5 +1,5 @@
 {
-    "MONGO_URL": "mongodb+srv://bhargavvidhan:Bhargav%402301@mypersonaltest.esvhw.mongodb.net/MetaJewels?retryWrites=true&w=majority&appName=MyPersonalTest",
+    "MONGO_URL": "mongodb+srv://metajewelryproduct:h6IjRMf8Vw0andFx@metajewelry.g4ehz.mongodb.net/MetaJewelry?retryWrites=true&w=majority&appName=MetaJewelry",
     "MONGO_PRODUCTION_URL": "mongodb+srv://metajewelryproduct:h6IjRMf8Vw0andFx@metajewelry.g4ehz.mongodb.net/MetaJewelry?retryWrites=true&w=majority&appName=MetaJewelry",
     "MONGO_DEVELOPMENT_URL": "mongodb+srv://bhargavvidhan:Bhargav%402301@mypersonaltest.esvhw.mongodb.net/MetaJewels?retryWrites=true&w=majority&appName=MyPersonalTest",
     "JWT_SECRET": "your_very_secret_key",

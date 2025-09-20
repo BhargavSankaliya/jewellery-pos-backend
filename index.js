@@ -14,6 +14,7 @@ const productCategoryRoute = require("./routes/productCategory");
 const couponRoute = require("./routes/couponRoute");
 const fileUploadRoute = require("./routes/fileUploadRoute");
 const orderRoute = require("./routes/orderRoute");
+const forceUpdateRoute = require("./routes/forceUpdateRoute");
 const path = require("path");
 const { errorHandler } = require("./middlewares/error");
 const verifyToken = require("./middlewares/verifyToken");
@@ -136,6 +137,9 @@ const upload = multer({
   { name: "machineLogo", maxCount: 1, },
   { name: "productImage", maxCount: 15, },
   { name: "productVideo", maxCount: 15, },
+  { name: "androidApk", maxCount: 1 },
+  { name: "iosApk", maxCount: 1 },
+  { name: "machineImage", maxCount: 1 },
 ]);
 
 
@@ -150,6 +154,7 @@ app.use("/api/machine-mobile", verifyMachineToken, machineMobileRoute);
 app.use("/api/store", verifyToken, storeRoute);
 app.use("/api/file", upload, fileUploadRoute);
 app.use("/api/product", verifyToken, productRoute);
+app.use("/api/forceUpdate", verifyToken, forceUpdateRoute);
 app.use("/api/order", upload, verifyToken, orderRoute);
 app.use("/api/coupons", verifyToken, couponRoute);
 app.use("/api/product/category", verifyToken, productCategoryRoute);
@@ -168,6 +173,13 @@ app.use((err, req, res, next) => {
 
 app.use(errorHandler);
 
+// app.use((req, res, next) => {
+//   if (req.headers["x-forwarded-proto"] !== "https") {
+//     return res.redirect(`https://${req.headers.host}${req.url}`);
+//   }
+//   next();
+// });
+
 // Serve the static files from the dist directory
 app.use(express.static(path.join(__dirname, 'frontend')));
 
@@ -176,6 +188,8 @@ app.get('*', (req, res) => {
   console.log(path.join(__dirname, 'frontend/index.html'));
   res.sendFile(path.join(__dirname, 'frontend/index.html'));
 });
+
+
 
 const http = require("http");
 let server = http.createServer(app);

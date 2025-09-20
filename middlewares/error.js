@@ -38,14 +38,22 @@ function errorHandler(err, req, res, next) {
     }
     // Handle custom errors
     else if (err instanceof CustomError) {
-        code = 200;
-        message = err.message;
+        if (err.statusCode == 1010) {
+            code = 400
+            message = err.message
+        }
+        else {
+            code = 200;
+            message = err.message;
+        }
     }
     // Other server errors
     else {
         code = 200;
         message = 'Internal Server Error';
     }
+    console.log("message ::::", req.url)
+    console.log("message ::::", message)
 
     const response = createResponse('error', code, message, res);
     // res.status(code).json(response);

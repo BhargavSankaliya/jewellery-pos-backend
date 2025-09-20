@@ -16,6 +16,8 @@ const { productModel } = require("../models/productModel.js");
 const OrderModel = require("../models/orderModel.js");
 const AddToCartModel = require("../models/addToCartModel.js");
 const { sendEmailForUser, sendEmailForMeta } = require("../helper/otpHelper.js");
+const forceUpdateModel = require("../models/forceUpdateModel.js");
+const addTimeEntryModel = require("../models/addTimeEntryModel.js");
 const machineAuthController = {}
 
 // Login API
@@ -395,6 +397,9 @@ machineAuthController.activeProducts = async (req, res, next) => {
                     storePrice: 1,
                     devidation: 1,
                     storeDiscount: 1,
+                    devidationForLabGrown: 1,
+                    storePriceForLabGrown: 1,
+                    storeDiscountForLabGrown: 1,
                     stoneType: {
                         $reduce: {
                             input: "$stoneType",
@@ -551,6 +556,9 @@ machineAuthController.getProductDetails = async (req, res, next) => {
                     storePrice: 1,
                     devidation: 1,
                     storeDiscount: 1,
+                    devidationForLabGrown: 1,
+                    storePriceForLabGrown: 1,
+                    storeDiscountForLabGrown: 1,
                     stoneType: {
                         $reduce: {
                             input: "$stoneType",
@@ -661,32 +669,32 @@ machineAuthController.order = async (req, res, next) => {
                 mainStonePcs: findProduct.mainStonePcs,
             };
 
-            let itemFound = false;
+            // let itemFound = false;
 
-            for (const y of findProduct.items) {
-                if (y._id.toString() === x.itemId.toString()) {
-                    if (x.diamondType === 'Natural') {
-                        if (y.stocks > 0 && y.stocks >= x.quantity) {
-                            y.stocks -= x.quantity;
-                            itemFound = true;
-                        } else {
-                            throw new CustomError("Natural Diamond Out of Stock.", 404);
-                        }
-                    } else {
-                        if (y.labGrownStock > 0 && y.labGrownStock >= x.quantity) {
-                            y.labGrownStock -= x.quantity;
-                            itemFound = true;
-                        } else {
-                            throw new CustomError("Lab Grown Diamond Out of Stock.", 404);
-                        }
-                    }
-                    break; // Stop loop once we find and update the item
-                }
-            }
+            // for (const y of findProduct.items) {
+            //     if (y._id.toString() === x.itemId.toString()) {
+            //         if (x.diamondType === 'Natural') {
+            //             if (y.stocks > 0 && y.stocks >= x.quantity) {
+            //                 y.stocks -= x.quantity;
+            //                 itemFound = true;
+            //             } else {
+            //                 throw new CustomError("Natural Diamond Out of Stock.", 404);
+            //             }
+            //         } else {
+            //             if (y.labGrownStock > 0 && y.labGrownStock >= x.quantity) {
+            //                 y.labGrownStock -= x.quantity;
+            //                 itemFound = true;
+            //             } else {
+            //                 throw new CustomError("Lab Grown Diamond Out of Stock.", 404);
+            //             }
+            //         }
+            //         break; // Stop loop once we find and update the item
+            //     }
+            // }
 
-            if (!itemFound) {
-                throw new CustomError("Item not found in product.", 404);
-            }
+            // if (!itemFound) {
+            //     throw new CustomError("Item not found in product.", 404);
+            // }
 
             await findProduct.save(); // Ensure changes are saved
         }
@@ -715,9 +723,21 @@ machineAuthController.order = async (req, res, next) => {
         })
 
         await AddToCartModel.deleteMany({ machineId: convertIdToObjectId(req.machine._id.toString()) });
+
+        orderCreate.products.map((x) => {
+            x.mrp = parseInt(x.mrp);
+            x.productPrice = parseInt(x.productPrice);
+            x.actualPrice = parseInt(x.actualPrice);
+            x.totalPrice = parseInt(x.totalPrice);
+            x.storeDiscount = parseInt(x.storeDiscount);
+            x.devidation = parseInt(x.devidation);
+            x.storePrice = parseInt(x.storePrice);
+        })
+
         return createResponse(orderCreate, 200, "Order Placed Successfully", res)
 
     } catch (error) {
+        console.log(error.message)
         errorHandler(error, req, res, next)
     }
 }
@@ -832,6 +852,32 @@ machineAuthController.orderCartDetails = async (req, res, next) => {
 
     } catch (error) {
         errorHandler(error, req, res, next)
+    }
+}
+
+machineAuthController.forceUpdateDetails = async (req, res, next) => {
+    try {
+
+        let forceDetails = await forceUpdateModel.aggregate([{ $match: { isDeleted: false } }]);
+        if (forceDetails.length != 0) {
+            createResponse(forceDetails[0], 200, "Fetched.", res);
+            return
+        }
+
+        createResponse(null, 200, "Fetched.", res);
+    } catch (error) {
+        errorHandler(error, req, res)
+    }
+}
+
+machineAuthController.addTimeEntry = async (req, res, next) => {
+    try {
+
+        let forceDetails = await addTimeEntryModel.create({ machineId: req.machine._id });
+
+        createResponse(null, 200, "Added.", res);
+    } catch (error) {
+        errorHandler(error, req, res)
     }
 }
 

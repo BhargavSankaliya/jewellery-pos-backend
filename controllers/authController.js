@@ -49,6 +49,9 @@ const FileUpload = async (req, res, next) => {
     let productImage = '';
     let productVideo = '';
     let machineLogo = '';
+    let iosApk = '';
+    let machineImage = '';
+    let androidApk = '';
 
     if (req.files && !!req.files.cImage && req.files.cImage.length > 0) {
       const cUploadIMage = req.files.cImage.map(async (x) => {
@@ -59,6 +62,39 @@ const FileUpload = async (req, res, next) => {
     }
     else {
       cImage = "";
+    }
+
+    if (req.files && !!req.files.machineImage && req.files.machineImage.length > 0) {
+      const cUploadIMage = req.files.machineImage.map(async (x) => {
+        machineImage = await fileInS3Upload(x, "uploads/machineImage")
+      })
+
+      await Promise.all(cUploadIMage);
+    }
+    else {
+      machineImage = "";
+    }
+
+    if (req.files && !!req.files.iosApk && req.files.iosApk.length > 0) {
+      const cUploadIMage = req.files.iosApk.map(async (x) => {
+        iosApk = await fileInS3Upload(x, "uploads/apk")
+      })
+
+      await Promise.all(cUploadIMage);
+    }
+    else {
+      iosApk = "";
+    }
+
+    if (req.files && !!req.files.androidApk && req.files.androidApk.length > 0) {
+      const cUploadIMage = req.files.androidApk.map(async (x) => {
+        androidApk = await fileInS3Upload(x, "uploads/apk")
+      })
+
+      await Promise.all(cUploadIMage);
+    }
+    else {
+      androidApk = "";
     }
 
     if (req.files && !!req.files.adsImage && req.files.adsImage.length > 0) {
@@ -156,7 +192,16 @@ const FileUpload = async (req, res, next) => {
     //   data: uploadedFiles
     // });
     createResponse({
-      cImage, adsVideo, adsImage, storeLogo, machineLogo, productImage, productVideo
+      cImage,
+      adsVideo,
+      adsImage,
+      storeLogo,
+      machineLogo,
+      productImage,
+      productVideo,
+      androidApk,
+      iosApk,
+      machineImage
     }, 200, 'File Upload Successfully.', res)
 
   } catch (error) {
@@ -281,31 +326,31 @@ authController.LoginUserController = async (req, res, next) => {
     if (!email) {
       throw new CustomError(
         "Email is required for login!",
-        400
+        1010
       );
     }
 
     if (!password) {
       throw new CustomError(
         "Password is required for login!",
-        400
+        1010
       );
     }
 
     let store = await StoreModel.findOne({ email: email.toLocaleLowerCase(), isDeleted: false });
 
     if (!store) {
-      throw new CustomError("Store not found!", 404);
+      throw new CustomError("Email is wrong!", 1010);
     }
 
     if (store.status == 'Inactive') {
-      throw new CustomError("Store is not activated!", 404);
+      throw new CustomError("Store is not activated!", 1010);
     }
 
 
     const match = await bcrypt.compare(password, store.password);
     if (!match) {
-      throw new CustomError("Wrong credentials!", 400);
+      throw new CustomError("Wrong credentials!", 1010);
     }
 
     const token = jwt.sign({ _id: store._id }, config.JWT_SECRET, {

@@ -145,7 +145,10 @@ productController.listForStore = async (req, res, next) => {
         $addFields: {
           devidation: "$storeDetails.devidation",
           storePrice: "$storeDetails.storePrice",
-          storeDiscount: "$storeDetails.storeDiscount"
+          storeDiscount: "$storeDetails.storeDiscount",
+          devidationForLabGrown: "$storeDetails.devidationForLabGrown",
+          storePriceForLabGrown: "$storeDetails.storePriceForLabGrown",
+          storeDiscountForLabGrown: "$storeDetails.storeDiscountForLabGrown",
         }
       },
       {
@@ -175,12 +178,15 @@ productController.listForStore = async (req, res, next) => {
                     productLabGrownPrice: {
                       $cond: {
                         if: {
-                          $gt: ["$devidation", 0]
+                          $gt: [
+                            "$devidationForLabGrown",
+                            0
+                          ]
                         },
                         then: {
                           $divide: [
                             "$$item.diamondTypeLabGrownMRP",
-                            "$devidation"
+                            "$devidationForLabGrown"
                           ]
                         },
                         else: "$$item.diamondTypeLabGrownMRP"
@@ -226,12 +232,7 @@ productController.listForStore = async (req, res, next) => {
                             "$storePrice"
                           ]
                         },
-                        else: {
-                          $divide: [
-                            "$$item.diamondTypeNaturalMRP",
-                            "$devidation"
-                          ]
-                        }
+                        else: "$$item.productNaturalPrice"
                       }
                     },
                     storeProductLabGrownPrice: {
@@ -239,10 +240,16 @@ productController.listForStore = async (req, res, next) => {
                         if: {
                           $and: [
                             {
-                              $gt: ["$devidation", 0]
+                              $gt: [
+                                "$devidationForLabGrown",
+                                0
+                              ]
                             },
                             {
-                              $gt: ["$storePrice", 0]
+                              $gt: [
+                                "$storePriceForLabGrown",
+                                0
+                              ]
                             }
                           ]
                         },
@@ -251,19 +258,13 @@ productController.listForStore = async (req, res, next) => {
                             {
                               $divide: [
                                 "$$item.diamondTypeLabGrownMRP",
-                                "$devidation"
+                                "$devidationForLabGrown"
                               ]
-
                             },
-                            "$storePrice"
+                            "$storePriceForLabGrown"
                           ]
                         },
-                        else: {
-                          $divide: [
-                            "$$item.diamondTypeLabGrownMRP",
-                            "$devidation"
-                          ]
-                        }
+                        else: "$$item.productLabGrownPrice"
                       }
                     }
                   }
@@ -326,7 +327,7 @@ productController.listForStore = async (req, res, next) => {
                           $and: [
                             {
                               $gt: [
-                                "$storeDiscount",
+                                "$storeDiscountForLabGrown",
                                 0
                               ]
                             },
@@ -346,7 +347,7 @@ productController.listForStore = async (req, res, next) => {
                                 "$$item.storeProductLabGrownPrice",
                                 {
                                   $divide: [
-                                    "$storeDiscount",
+                                    "$storeDiscountForLabGrown",
                                     100
                                   ]
                                 }

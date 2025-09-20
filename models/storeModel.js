@@ -65,6 +65,21 @@ const storeSchema = new mongoose.Schema(
       default: 0,
       required: [true, 'Store Discount is required'],
     },
+    devidationForLabGrown: {
+      type: Number,
+      default: 0,
+      required: [true, 'Devidation is required'],
+    },
+    storePriceForLabGrown: {
+      type: Number,
+      default: 0,
+      required: [true, 'Store Price is required'],
+    },
+    storeDiscountForLabGrown: {
+      type: Number,
+      default: 0,
+      required: [true, 'Store Discount is required'],
+    },
     pinCode: {
       type: String,
       required: [true, 'PINCODE is required.'],
@@ -223,6 +238,22 @@ const storeSchema = new mongoose.Schema(
     },
     files: {
       type: Array,
+      required: false,
+    },
+    kioskImage1: {
+      type: String,
+      required: false,
+    },
+    kioskImage2: {
+      type: String,
+      required: false,
+    },
+    kioskImage3: {
+      type: String,
+      required: false,
+    },
+    kioskImage4: {
+      type: String,
       required: false,
     },
   },

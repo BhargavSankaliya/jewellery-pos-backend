@@ -31,7 +31,11 @@ commonFilter.storeCommonObject = {
     locations: 1,
     status: 1,
     role: 1,
-    files: 1
+    files: 1,
+    kioskImage1: 1,
+    kioskImage2: 1,
+    kioskImage3: 1,
+    kioskImage4: 1,
 }
 
 commonFilter.machineCommonObject = {
@@ -234,7 +238,10 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
             $addFields: {
                 devidation: "$storeDetails.devidation",
                 storePrice: "$storeDetails.storePrice",
-                storeDiscount: "$storeDetails.storeDiscount"
+                storeDiscount: "$storeDetails.storeDiscount",
+                devidationForLabGrown: "$storeDetails.devidationForLabGrown",
+                storePriceForLabGrown: "$storeDetails.storePriceForLabGrown",
+                storeDiscountForLabGrown: "$storeDetails.storeDiscountForLabGrown",
             }
         },
         {
@@ -264,12 +271,15 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                     productLabGrownPrice: {
                                         $cond: {
                                             if: {
-                                                $gt: ["$devidation", 0]
+                                                $gt: [
+                                                    "$devidationForLabGrown",
+                                                    0
+                                                ]
                                             },
                                             then: {
                                                 $divide: [
                                                     "$$item.diamondTypeLabGrownMRP",
-                                                    "$devidation"
+                                                    "$devidationForLabGrown"
                                                 ]
                                             },
                                             else: "$$item.diamondTypeLabGrownMRP"
@@ -306,7 +316,12 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                             },
                                             then: {
                                                 $multiply: [
-                                                    "$$item.productNaturalPrice",
+                                                    {
+                                                        $divide: [
+                                                            "$$item.diamondTypeNaturalMRP",
+                                                            "$devidation"
+                                                        ]
+                                                    },
                                                     "$storePrice"
                                                 ]
                                             },
@@ -318,17 +333,28 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                             if: {
                                                 $and: [
                                                     {
-                                                        $gt: ["$devidation", 0]
+                                                        $gt: [
+                                                            "$devidationForLabGrown",
+                                                            0
+                                                        ]
                                                     },
                                                     {
-                                                        $gt: ["$storePrice", 0]
+                                                        $gt: [
+                                                            "$storePriceForLabGrown",
+                                                            0
+                                                        ]
                                                     }
                                                 ]
                                             },
                                             then: {
                                                 $multiply: [
-                                                    "$$item.productLabGrownPrice",
-                                                    "$storePrice"
+                                                    {
+                                                        $divide: [
+                                                            "$$item.diamondTypeLabGrownMRP",
+                                                            "$devidationForLabGrown"
+                                                        ]
+                                                    },
+                                                    "$storePriceForLabGrown"
                                                 ]
                                             },
                                             else: "$$item.productLabGrownPrice"
@@ -394,7 +420,7 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                                 $and: [
                                                     {
                                                         $gt: [
-                                                            "$storeDiscount",
+                                                            "$storeDiscountForLabGrown",
                                                             0
                                                         ]
                                                     },
@@ -414,7 +440,7 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                                                             "$$item.storeProductLabGrownPrice",
                                                             {
                                                                 $divide: [
-                                                                    "$storeDiscount",
+                                                                    "$storeDiscountForLabGrown",
                                                                     100
                                                                 ]
                                                             }

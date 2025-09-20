@@ -102,6 +102,67 @@ machineController.list = async (req, res, next) => {
           storeAddress: "$storeDetails.address",
         },
       },
+      {
+        $lookup: {
+          from: "addtimeentrymodels",
+          let: { machineId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$machineId", "$$machineId"] } } },
+            { $sort: { createdAt: -1 } },
+            { $limit: 1 }  // 🚀 Only fetch the last activity
+          ],
+          as: "machineActivity"
+        }
+      },
+      {
+        $addFields: {
+          lastActivity: {
+            $ifNull: [{ $arrayElemAt: ["$machineActivity.createdAt", 0] }, null]
+          }
+        }
+      },
+      {
+        $addFields: {
+          machineStatus: {
+            $cond: {
+              if: {
+                $and: [
+                  {
+                    $gt: [
+                      {
+                        $size: { $ifNull: ["$machineActivity", []] }
+                      },
+                      0
+                    ]
+                  },
+                  // Ensure activity exists
+                  {
+                    $lte: [
+                      {
+                        $dateDiff: {
+                          startDate: "$lastActivity",
+                          endDate: "$$NOW",
+                          unit: "minute"
+                        }
+                      },
+                      5
+                    ]
+                  }
+                ]
+              },
+              then: "Online",
+              else: "Offline"
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          machineActivity: 0,
+          // Exclude machineActivity from output
+          lastActivity: 0
+        }
+      }
     ]
 
     let machineList = await MachineModel.aggregate(aggragationQuery);

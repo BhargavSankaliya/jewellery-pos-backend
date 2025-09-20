@@ -18,6 +18,16 @@ storeController.createUpdateStore = async (req, res, next) => {
 
     if (req.query._id) {
       const storeId = convertIdToObjectId(req.query._id);
+
+      const storeDetails = await StoreModel.findById(storeId.toString());
+
+      if (storeDetails.email != email) {
+        const findStore = await StoreModel.findOne({ email, isDeleted: false });
+        if (!!findStore) {
+          throw new CustomError("Email already exists!", 400);
+        }
+      }
+
       let StoreUpdate = await StoreModel.findOneAndUpdate({ _id: storeId }, req.body, { upsert: true })
       return createResponse(null, 200, "Store Updated Successfully.", res);
     }
@@ -79,6 +89,29 @@ storeController.list = async (req, res, next) => {
     }
 
     return createResponse([], 200, "No store found.", res);
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+storeController.changePasswordByEmail = async (req, res, next) => {
+  try {
+
+    let { email, password } = req.body;
+
+    const findStore = await StoreModel.findOne({ email, isDeleted: false });
+
+    if (!findStore) {
+      throw new CustomError("Store not found.", 400);
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hashSync(password, salt);
+
+    findStore.password = hashedPassword;
+    await findStore.save();
+
+    return createResponse(null, 200, "Password Change Successfully.", res);
   } catch (error) {
     errorHandler(error, req, res)
   }
