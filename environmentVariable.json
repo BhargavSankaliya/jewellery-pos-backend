@@ -14,6 +14,8 @@
     "AUTHPASSWORD": "uodoummtprfqphxl",
     "TWILIO_ACCOUNT_SID": "AC361462dda9f0e8d052dc09026ad3ec09",
     "TWILIO_AUTH_TOKEN": "41e98bba946231b12fc72ce9508b5817",
+    "accessKeyId": "AKIA5CBDRNFVMOR62IXT",
+    "secretAccessKey": "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",
     "region": "eu-north-1",
     "bucketName": "metajewelry",
     "s3BaseUrl": "https://metajewelry.s3.eu-north-1.amazonaws.com/"

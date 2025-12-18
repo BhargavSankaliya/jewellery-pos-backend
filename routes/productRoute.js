@@ -24,5 +24,8 @@ router.delete("", productController.adsDelete);
 // ads status update _id query
 router.get("/update-status", productController.updateAdsStatus);
 
+// ads status update _id query
+router.delete("/soft-delete", productController.softDeleteProduct);
+
 
 module.exports = router

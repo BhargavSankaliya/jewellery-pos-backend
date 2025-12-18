@@ -450,4 +450,25 @@ productController.updateAdsStatus = async (req, res, next) => {
   }
 }
 
+productController.softDeleteProduct = async (req, res, next) => {
+  try {
+
+    let productDetails = await productModel.findById(req.query._id)
+
+    if (!productDetails) {
+      throw new CustomError("Ads not found.", 400);
+    }
+
+    let status = 'Inactive';
+    let isDeleted = true;
+    let deletedAt = new Date();
+
+    await productModel.findOneAndUpdate({ _id: convertIdToObjectId(req.query._id) }, { status, isDeleted, deletedAt });
+
+    createResponse({ isDeleted: true }, 200, 'Deleted Successfully.', res);
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
 module.exports = { productController }
