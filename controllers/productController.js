@@ -144,11 +144,53 @@ productController.listForStore = async (req, res, next) => {
       {
         $addFields: {
           devidation: "$storeDetails.devidation",
+          latestGoldPercentage: {
+            $divide: ["$storeDetails.latestGoldPercentage", 100]
+          },
           storePrice: "$storeDetails.storePrice",
           storeDiscount: "$storeDetails.storeDiscount",
           devidationForLabGrown: "$storeDetails.devidationForLabGrown",
           storePriceForLabGrown: "$storeDetails.storePriceForLabGrown",
           storeDiscountForLabGrown: "$storeDetails.storeDiscountForLabGrown",
+        }
+      },
+      {
+        $addFields: {
+          items: {
+            $map: {
+              input: "$items",
+              as: "item",
+              in: {
+                $mergeObjects: [
+                  "$$item",
+                  {
+                    diamondTypeLabGrownMRP: {
+                      $round: [
+                        {
+                          $sum: [
+                            { $multiply: ["$$item.diamondTypeLabGrownMRP", "$latestGoldPercentage"] },
+                            "$$item.diamondTypeLabGrownMRP"
+                          ]
+                        },
+                        2
+                      ]
+                    },
+                    diamondTypeNaturalMRP: {
+                      $round: [
+                        {
+                          $sum: [
+                            { $multiply: ["$$item.diamondTypeNaturalMRP", "$latestGoldPercentage"] },
+                            "$$item.diamondTypeNaturalMRP"
+                          ]
+                        },
+                        2
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       },
       {

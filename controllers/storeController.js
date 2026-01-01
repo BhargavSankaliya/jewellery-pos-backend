@@ -160,4 +160,24 @@ storeController.updateStoreStatus = async (req, res, next) => {
   }
 }
 
+storeController.updateGoldPercentageValue = async (req, res, next) => {
+  try {
+
+    let { goldPercentage } = req.body;
+
+    if (!goldPercentage) {
+      throw new CustomError("Gold percentage is required.", 400);
+    }
+
+    let updateResult = await StoreModel.updateMany(
+      { isDeleted: false },
+      { $set: { latestGoldPercentage: Number(goldPercentage) } }
+    );
+
+    createResponse(null, 200, "Gold percentage updated successfully.", res);
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
 module.exports = { storeController }

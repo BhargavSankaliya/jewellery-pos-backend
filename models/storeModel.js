@@ -50,6 +50,10 @@ const storeSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    latestGoldPercentage: {
+      type: Number,
+      default: 0,
+    },
     devidation: {
       type: Number,
       default: 0,

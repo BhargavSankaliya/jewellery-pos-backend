@@ -24,4 +24,7 @@ router.delete("", storeController.adsDelete);
 // ads status update _id query
 router.get("/update-status", storeController.updateStoreStatus);
 
+// update gold percentage value 
+router.post("/update-gold-percentage", storeController.updateGoldPercentageValue);
+
 module.exports = router
