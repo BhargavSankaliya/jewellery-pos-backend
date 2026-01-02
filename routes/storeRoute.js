@@ -27,4 +27,7 @@ router.get("/update-status", storeController.updateStoreStatus);
 // update gold percentage value 
 router.post("/update-gold-percentage", storeController.updateGoldPercentageValue);
 
+// update gold percentage value 
+router.get("/latest/goldPrice", storeController.getGoldPriceLatest);
+
 module.exports = router

@@ -273,6 +273,8 @@ machineAuthController.activeProducts = async (req, res, next) => {
             status: 'Active'
         });
 
+        let findStore = await StoreModel.findById(req.machine.storeId);
+
         if (req.body.category != 'null' && !!req.body.category) {
             condition["$and"].push({
                 category: convertIdToObjectId(req.body.category)
@@ -441,6 +443,8 @@ machineAuthController.activeProducts = async (req, res, next) => {
 
         getAllProducts.map((x) => {
             x.items.map((y) => {
+                y.diamondTypeNaturalMRP = parseFloat(y.diamondTypeNaturalMRP.toFixed(2));
+                y.diamondTypeLabGrownMRP = parseFloat(y.diamondTypeLabGrownMRP.toFixed(2));
                 y.actualNaturalPrice = parseFloat(y.actualNaturalPrice.toFixed(2));
                 y.actualLabGrownPrice = parseFloat(y.actualLabGrownPrice.toFixed(2));
                 y.storeProductNaturalPrice = parseFloat(y.storeProductNaturalPrice.toFixed(2));

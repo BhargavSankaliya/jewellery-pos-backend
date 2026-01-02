@@ -239,9 +239,59 @@ commonFilter.calculateProductDiamondTypePrice = (storeId) => {
                 devidation: "$storeDetails.devidation",
                 storePrice: "$storeDetails.storePrice",
                 storeDiscount: "$storeDetails.storeDiscount",
+                latestGoldPercentage: "$storeDetails.latestGoldPercentage",
                 devidationForLabGrown: "$storeDetails.devidationForLabGrown",
                 storePriceForLabGrown: "$storeDetails.storePriceForLabGrown",
                 storeDiscountForLabGrown: "$storeDetails.storeDiscountForLabGrown",
+            }
+        },
+        {
+            $addFields: {
+                items: {
+                    $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                            $mergeObjects: [
+                                "$$item",
+                                {
+                                    diamondTypeNaturalMRP: {
+                                        $multiply: [
+                                            "$$item.diamondTypeNaturalMRP",
+                                            {
+                                                $add: [
+                                                    1,
+                                                    {
+                                                        $divide: [
+                                                            "$latestGoldPercentage",
+                                                            100
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    diamondTypeLabGrownMRP: {
+                                        $multiply: [
+                                            "$$item.diamondTypeLabGrownMRP",
+                                            {
+                                                $add: [
+                                                    1,
+                                                    {
+                                                        $divide: [
+                                                            "$latestGoldPercentage",
+                                                            100
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         },
         {

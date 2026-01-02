@@ -144,9 +144,7 @@ productController.listForStore = async (req, res, next) => {
       {
         $addFields: {
           devidation: "$storeDetails.devidation",
-          latestGoldPercentage: {
-            $divide: ["$storeDetails.latestGoldPercentage", 100]
-          },
+          latestGoldPercentage: "$storeDetails.latestGoldPercentage",
           storePrice: "$storeDetails.storePrice",
           storeDiscount: "$storeDetails.storeDiscount",
           devidationForLabGrown: "$storeDetails.devidationForLabGrown",
@@ -164,26 +162,36 @@ productController.listForStore = async (req, res, next) => {
                 $mergeObjects: [
                   "$$item",
                   {
-                    diamondTypeLabGrownMRP: {
-                      $round: [
+                    diamondTypeNaturalMRP: {
+                      $multiply: [
+                        "$$item.diamondTypeNaturalMRP",
                         {
-                          $sum: [
-                            { $multiply: ["$$item.diamondTypeLabGrownMRP", "$latestGoldPercentage"] },
-                            "$$item.diamondTypeLabGrownMRP"
+                          $add: [
+                            1,
+                            {
+                              $divide: [
+                                "$latestGoldPercentage",
+                                100
+                              ]
+                            }
                           ]
-                        },
-                        2
+                        }
                       ]
                     },
-                    diamondTypeNaturalMRP: {
-                      $round: [
+                    diamondTypeLabGrownMRP: {
+                      $multiply: [
+                        "$$item.diamondTypeLabGrownMRP",
                         {
-                          $sum: [
-                            { $multiply: ["$$item.diamondTypeNaturalMRP", "$latestGoldPercentage"] },
-                            "$$item.diamondTypeNaturalMRP"
+                          $add: [
+                            1,
+                            {
+                              $divide: [
+                                "$latestGoldPercentage",
+                                100
+                              ]
+                            }
                           ]
-                        },
-                        2
+                        }
                       ]
                     }
                   }

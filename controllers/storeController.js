@@ -180,4 +180,19 @@ storeController.updateGoldPercentageValue = async (req, res, next) => {
   }
 }
 
+storeController.getGoldPriceLatest = async (req, res, next) => {
+  try {
+
+    let goldPrice = await StoreModel.findOne({ isDeleted: false }).select('latestGoldPercentage').sort({ updatedAt: -1 }).limit(1);
+
+    if (!goldPrice) {
+      throw new CustomError("Gold price not found.", 404);
+    }
+
+    createResponse(goldPrice, 200, "Gold percentage fetched successfully.", res);
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
 module.exports = { storeController }
