@@ -4,6 +4,7 @@ const config = require("../environmentVariable.json");
 const createResponse = require("../middlewares/response.js");
 const { convertIdToObjectId } = require("./authController.js");
 const { productModel } = require("../models/productModel.js");
+const StoreModel = require("../models/storeModel.js");
 const productController = {};
 
 productController.createUpdateProduct = async (req, res, next) => {
@@ -38,7 +39,9 @@ productController.list = async (req, res, next) => {
       condition["$and"].push({
         status: "Active"
       });
-    }
+    };
+
+    let latestGoldPercentage = await StoreModel.findOne({ _id: convertIdToObjectId(req.store._id.toString()) }, { latestGoldPercentage: 1, _id: 0 });
 
     let aggragationQuery = [
       {
@@ -65,6 +68,55 @@ productController.list = async (req, res, next) => {
           foreignField: "_id",
           as: "subCategoriesDetails",
         },
+      },
+      {
+        $addFields: {
+          items: {
+            $map: {
+              input: "$items",
+              as: "item",
+              in: {
+                $mergeObjects: [
+                  "$$item",
+                  {
+                    diamondTypeNaturalMRP: {
+                      $multiply: [
+                        "$$item.diamondTypeNaturalMRP",
+                        {
+                          $add: [
+                            1,
+                            {
+                              $divide: [
+                                latestGoldPercentage.latestGoldPercentage,
+                                100
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    diamondTypeLabGrownMRP: {
+                      $multiply: [
+                        "$$item.diamondTypeLabGrownMRP",
+                        {
+                          $add: [
+                            1,
+                            {
+                              $divide: [
+                                latestGoldPercentage.latestGoldPercentage,
+                                100
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       {
         $addFields: {
